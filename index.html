@@ -1073,7 +1073,7 @@ body.single-file .topbar{position:sticky;top:0}
   box-shadow:0 0 0 10px rgba(38,217,199,.06),0 22px 42px rgba(0,0,0,.30);
 }
 
-.cloud-status-badge{
+.cloud-status-badge{cursor:pointer;
   padding:7px 10px;border-radius:999px;border:1px solid #345166;
   font-size:10px;font-weight:900;white-space:nowrap
 }
@@ -1889,7 +1889,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     if(e.data?.type==="control") controlListeners.forEach(fn=>fn(e.data));
     else listeners.forEach(fn=>fn(e.data));
   };
-  let cloud=null, cloudReady=false, cloudError="";
+  let cloud=null, cloudReady=false, cloudError="", cloudErrorCode="";
   async function initCloud(){
     const cfg=window.YEAST_FIREBASE_CONFIG;
     if(!cfg||!cfg.databaseURL) return false;
@@ -1902,7 +1902,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
       const app=initializeApp(cfg), auth=getAuth(app); await signInAnonymously(auth);
       const db=getDatabase(app);
       cloud={db,ref,set,onValue}; cloudReady=true; return true
-    }catch(err){cloudError=String(err);console.warn("Firebase disabled:",err);return false}
+    }catch(err){cloudErrorCode=err?.code||"";cloudError=err?.message||String(err);console.warn("Firebase disabled:",err);return false}
   }
   const cloudPromise=initCloud();
   function safeKey(s){return String(s||"group").replace(/[.#$/\[\]]/g,"_").slice(0,80)}
@@ -1970,6 +1970,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     isCloud:()=>cloudReady,
     status:()=>cloudReady?"연결됨":(cloudError?"연결안됨":"연결 중"),
     error:()=>cloudError,
+    errorCode:()=>cloudErrorCode,
     whenReady:()=>cloudPromise
   };
 })();</script>
@@ -2223,6 +2224,21 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
       badge.title=YeastCloud.error()||"연결안됨";
     }
   }
+  function showCloudDiagnostic(){
+    if(YeastCloud.isCloud()) return;
+    const code=YeastCloud.errorCode?.()||"";
+    const raw=YeastCloud.error?.()||"";
+    let guide="연결 설정을 확인하세요.";
+    if(code==="auth/operation-not-allowed") guide="Firebase Authentication에서 익명 로그인을 사용 설정해야 합니다.";
+    else if(code==="auth/invalid-api-key" || code==="auth/api-key-not-valid") guide="Firebase 웹 앱의 apiKey가 현재 사이트 설정과 일치하는지 확인해야 합니다.";
+    else if(code==="auth/unauthorized-domain") guide="Firebase Authentication → 설정 → 승인된 도메인에 hyunjint.github.io를 추가해야 합니다.";
+    else if(code==="auth/network-request-failed") guide="현재 네트워크에서 Firebase 인증 서버 접속이 차단되었거나 일시적으로 실패했습니다.";
+    else if(/permission_denied|PERMISSION_DENIED/i.test(raw)) guide="Realtime Database 규칙에서 인증 사용자의 읽기·쓰기가 허용되어 있는지 확인해야 합니다.";
+    const msg=`연결안됨\n\n오류 코드: ${code||"확인 불가"}\n${guide}`;
+    window.alert(msg);
+  }
+  $("studentCloudStatus")?.addEventListener("click",showCloudDiagnostic);
+  $("studentCloudStatus")?.setAttribute("title","연결안됨일 때 클릭하면 원인을 확인할 수 있습니다.");
   updateStudentCloudStatus();
   function applyChallengeGate(enabled){
     challengeUnlocked=!!enabled;
