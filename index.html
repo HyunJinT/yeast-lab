@@ -1080,6 +1080,47 @@ body.single-file .topbar{position:sticky;top:0}
 .cloud-status-badge.connecting{color:#f4cf75;background:rgba(251,191,36,.08);border-color:rgba(251,191,36,.35)}
 .cloud-status-badge.online{color:#7ff3d8;background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.38)}
 .cloud-status-badge.error{color:#ff9aaa;background:rgba(251,113,133,.08);border-color:rgba(251,113,133,.42)}
+
+.top-header-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
+.top-reset-btn{
+  border:1px solid rgba(251,113,133,.48);
+  background:rgba(251,113,133,.08);
+  color:#ffabb8;
+  border-radius:10px;
+  padding:9px 13px;
+  font-weight:900;
+  font-size:12px;
+  white-space:nowrap;
+}
+.top-reset-btn:hover{background:rgba(251,113,133,.16);filter:brightness(1.08)}
+.reset-confirm-modal{
+  position:fixed;inset:0;z-index:9999;display:grid;place-items:center;
+  padding:20px;background:rgba(1,8,15,.78);backdrop-filter:blur(5px)
+}
+.reset-confirm-modal.hidden{display:none!important}
+.reset-confirm-card{
+  width:min(520px,94vw);padding:30px;border-radius:22px;text-align:center;
+  border-color:rgba(251,113,133,.38)
+}
+.reset-confirm-icon{
+  width:58px;height:58px;border-radius:50%;display:grid;place-items:center;
+  margin:0 auto 14px;border:1px solid #f59e0b;background:rgba(245,158,11,.08);
+  color:#ffd166;font-size:32px;font-weight:950
+}
+.reset-confirm-card h2{margin:8px 0 12px;font-size:27px}
+.reset-confirm-card p{color:#bed0dc;line-height:1.65;margin:0}
+.reset-confirm-card p strong{color:#ffabb8}
+.reset-confirm-question{margin-top:16px!important;color:#fff!important;font-weight:900}
+.reset-confirm-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:22px}
+.danger-confirm-btn{
+  border:1px solid #fb7185;background:#8d2034;color:#fff;border-radius:11px;
+  padding:11px 14px;font-weight:900
+}
+.danger-confirm-btn:hover{filter:brightness(1.12)}
+@media(max-width:720px){
+  .top-header-actions{gap:5px}
+  .top-reset-btn,.top-home-btn{padding:8px 9px;font-size:11px}
+}
 </style>
 </head>
 <body class="single-file">
@@ -1090,9 +1131,26 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
 
 <header class="single-top">
   <div class="brand"><span class="brand-avatar"><img data-hyunjin-avatar alt="초미녀현진쌤 얼굴 캐릭터"></span><b>초미녀현진쌤과 함께하는 세포와 물질대사</b></div>
-  <button id="topHomeBtn" class="top-home-btn" type="button">처음으로</button>
+  <div class="top-header-actions">
+    <button id="topResetBtn" class="top-reset-btn" type="button">초기화시키기</button>
+    <button id="topHomeBtn" class="top-home-btn" type="button">처음으로</button>
+  </div>
 </header>
 
+
+<div id="resetConfirmModal" class="modal hidden reset-confirm-modal" aria-hidden="true">
+  <div class="reset-confirm-card glass" role="dialog" aria-modal="true" aria-labelledby="resetConfirmTitle">
+    <div class="reset-confirm-icon">!</div>
+    <span class="step-kicker">RESET CONFIRM</span>
+    <h2 id="resetConfirmTitle">정말 초기화할까요?</h2>
+    <p>이 기기의 현재 모둠 실험 데이터와 해당 모둠의 저장 데이터가 모두 초기화됩니다.<br><strong>한 번 초기화하면 되돌릴 수 없습니다.</strong></p>
+    <p class="reset-confirm-question">진짜 초기화하시겠습니까?</p>
+    <div class="reset-confirm-actions">
+      <button id="resetCancelBtn" class="secondary-btn" type="button">취소</button>
+      <button id="resetConfirmBtn" class="danger-confirm-btn" type="button">확인 · 초기화</button>
+    </div>
+  </div>
+</div>
 
 <section id="landingView" class="view active">
   <main class="landing-shell">
@@ -1925,6 +1983,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
   const sc=document.getElementById('studentContainer');
   const tc=document.getElementById('teacherContainer');
   const teacherModal=document.getElementById('teacherPasswordModal');
+  const resetConfirmModal=document.getElementById('resetConfirmModal');
 
   function open(which){
     landing.classList.remove('active');
@@ -1971,6 +2030,35 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
   }
 
   document.getElementById('topHomeBtn')?.addEventListener('click',home);
+  document.getElementById('topResetBtn')?.addEventListener('click',()=>{
+    resetConfirmModal?.classList.remove('hidden');
+    resetConfirmModal?.setAttribute('aria-hidden','false');
+  });
+  document.getElementById('resetCancelBtn')?.addEventListener('click',()=>{
+    resetConfirmModal?.classList.add('hidden');
+    resetConfirmModal?.setAttribute('aria-hidden','true');
+  });
+  resetConfirmModal?.addEventListener('click',e=>{
+    if(e.target===resetConfirmModal){
+      resetConfirmModal.classList.add('hidden');
+      resetConfirmModal.setAttribute('aria-hidden','true');
+    }
+  });
+  document.getElementById('resetConfirmBtn')?.addEventListener('click',async()=>{
+    const btn=document.getElementById('resetConfirmBtn');
+    if(btn){btn.disabled=true;btn.textContent='초기화 중...'}
+    try{
+      if(typeof window.YeastStudentReset==='function') await window.YeastStudentReset();
+      else{
+        try{localStorage.removeItem('yeastStudentStateV1')}catch(e){}
+        location.reload();
+      }
+    }catch(e){
+      console.warn(e);
+      try{localStorage.removeItem('yeastStudentStateV1')}catch(err){}
+      location.reload();
+    }
+  });
   document.getElementById('openStudentBtn').addEventListener('click',()=>open('student'));
   document.getElementById('openTeacherBtn').addEventListener('click',requestTeacherAccess);
   document.getElementById('teacherPasswordCancel').addEventListener('click',closeTeacherAccess);
@@ -2007,6 +2095,19 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
   };
   const defaults={classId:"",group:"",members:"",stage:"join",hypothesis:"",experiments:[],reflection:{},challenge:null,current:null};
   let state={...defaults}; let running=false, timer=null, challengeUnlocked=false, warningFocusId=null;
+  window.YeastStudentReset=async function(){
+    try{if(timer)clearInterval(timer)}catch(e){}
+    running=false;
+    const oldClass=state.classId||"";
+    const oldGroup=state.group||"";
+    const oldKey=`${oldClass}-${oldGroup}`.trim();
+    if(oldClass && oldGroup){
+      try{await YeastCloud.deleteGroup({key:oldKey,classId:oldClass})}catch(e){console.warn("Firebase group reset failed:",e)}
+    }
+    try{safeStorage.remove(stateKey)}catch(e){}
+    state={...defaults,reflection:{}};
+    location.reload();
+  };
   const thinkerBellLinks={
     B:"https://b.tkbell.co.kr/tkboard/woi/1192365/1T94oz3pq4.do?pageSeq=2526603",
     C:"https://b.tkbell.co.kr/tkboard/woi/1192365/Zq63fn812w.do?pageSeq=2526604",
