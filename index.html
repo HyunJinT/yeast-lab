@@ -1660,7 +1660,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
 </div>
 
 <script>window.YEAST_FIREBASE_CONFIG = {
-    apiKey: "AIzaSyBCwYINAGzbOqHRjCEjqgKPQ4dcF3IRTWM",
+    apiKey: "AIzaSyBCwV1NAGzbOqHRjCEjqgKPQ4dcF3IRTWM",
     authDomain: "yeast-lab.firebaseapp.com",
     databaseURL: "https://yeast-lab-default-rtdb.firebaseio.com",
     projectId: "yeast-lab",
@@ -1968,7 +1968,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     publish,subscribeLocal,subscribeCloud,localSnapshot,deleteGroup,
     controlSnapshot,publishControl,subscribeControlLocal,subscribeControlCloud,
     isCloud:()=>cloudReady,
-    status:()=>cloudReady?"Firebase 실시간 연결됨":(cloudError?"Firebase 연결 오류":"Firebase 연결 중"),
+    status:()=>cloudReady?"연결됨":(cloudError?"연결안됨":"연결 중"),
     error:()=>cloudError,
     whenReady:()=>cloudPromise
   };
@@ -2220,7 +2220,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     if(ok && state.classId && state.group) sync();
     if(!ok){
       console.warn("Firebase connection error:",YeastCloud.error());
-      badge.title=YeastCloud.error()||"Firebase 연결 오류";
+      badge.title=YeastCloud.error()||"연결안됨";
     }
   }
   updateStudentCloudStatus();
@@ -2945,8 +2945,8 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     YeastCloud.subscribeControlLocal(onControl);
     controlCloudUnsub=await YeastCloud.subscribeControlCloud(onControl);
     $("syncNotice").textContent=YeastCloud.isCloud()
-      ? "동기화 상태: Firebase 실시간 연결됨 · 다른 컴퓨터의 학생 데이터도 자동으로 표시됩니다."
-      : `동기화 상태: Firebase 연결 오류 · ${YeastCloud.error()||"연결 설정을 확인하세요."}`;
+      ? "동기화 상태: 연결됨 · 다른 컴퓨터의 학생 데이터도 자동으로 표시됩니다."
+      : "동기화 상태: 연결안됨";
     renderChallengeControls();render();
     if(teacherTicker)clearInterval(teacherTicker);
     teacherTicker=setInterval(()=>render(),1000)
