@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>YEAST LAB · 단일 HTML v3.3</title>
+<title>YEAST LAB · 단일 HTML v3.4</title>
 <style>
 
 :root{
@@ -976,6 +976,28 @@ body.single-file .topbar{position:sticky;top:0}
   word-break:break-word;
 }
 
+
+/* teacher selective delete */
+.group-card{position:relative}
+.group-delete-btn{
+  position:absolute;right:9px;top:9px;z-index:3;
+  border:1px solid rgba(251,113,133,.45);
+  background:rgba(251,113,133,.08);
+  color:#ff9aaa;
+  border-radius:8px;
+  padding:5px 8px;
+  font-size:10px;
+  font-weight:900;
+}
+.group-delete-btn:hover{background:rgba(251,113,133,.18);border-color:#fb7185}
+.detail-delete-row{display:flex;justify-content:flex-end;margin:8px 0 0}
+.detail-delete-btn{
+  border:1px solid rgba(251,113,133,.5);
+  background:#2a121b;color:#ffacb8;
+  border-radius:9px;padding:8px 11px;font-weight:900;
+}
+.detail-delete-btn:hover{filter:brightness(1.15)}
+
 </style>
 </head>
 <body class="single-file">
@@ -1705,6 +1727,7 @@ body.single-file .topbar{position:sticky;top:0}
   const safeStorage={
     get(k){try{return localStorage.getItem(k)}catch(e){return null}},
     set(k,v){try{localStorage.setItem(k,v)}catch(e){}},
+    remove(k){try{localStorage.removeItem(k)}catch(e){}},
     keys(){try{return Array.from({length:localStorage.length},(_,i)=>localStorage.key(i))}catch(e){return []}}
   };
   const channel=("BroadcastChannel" in window)?new BroadcastChannel("yeast-lab-live"):null;
@@ -1767,6 +1790,19 @@ body.single-file .topbar{position:sticky;top:0}
     }
     return payload
   }
+  async function deleteGroup(payload){
+    if(!payload?.key)return false;
+    safeStorage.remove("yeast:last:"+payload.key);
+    const msg={type:"deleteGroup",key:payload.key,classId:payload.classId||"",updatedAt:Date.now()};
+    if(channel) channel.postMessage(msg);
+    listeners.forEach(fn=>fn(msg));
+    await cloudPromise;
+    if(cloudReady && payload.classId){
+      const p=`classes/${safeKey(payload.classId)}/groups/${safeKey(payload.key)}`;
+      try{await cloud.set(cloud.ref(cloud.db,p),null)}catch(e){console.warn(e);return false}
+    }
+    return true
+  }
   function subscribeControlLocal(fn){controlListeners.add(fn);return()=>controlListeners.delete(fn)}
   async function subscribeControlCloud(fn){
     await cloudPromise;if(!cloudReady)return()=>{};
@@ -1775,7 +1811,7 @@ body.single-file .topbar{position:sticky;top:0}
     })
   }
   window.YeastCloud={
-    publish,subscribeLocal,subscribeCloud,localSnapshot,
+    publish,subscribeLocal,subscribeCloud,localSnapshot,deleteGroup,
     controlSnapshot,publishControl,subscribeControlLocal,subscribeControlCloud,
     isCloud:()=>cloudReady,status:()=>cloudReady?"Firebase 연결됨":(cloudError?"Firebase 오류":"로컬/데모 모드")
   };
@@ -2669,7 +2705,16 @@ body.single-file .topbar{position:sticky;top:0}
     renderChallengeControls();
     await YeastCloud.publishControl(cls,next)
   }));
-  function ingest(p){if(!p?.key)return;groups.set(p.key,p);render()}
+  function ingest(p){
+    if(!p?.key)return;
+    if(p.type==="deleteGroup"){
+      groups.delete(p.key);
+      render();
+      return
+    }
+    groups.set(p.key,p);
+    render()
+  }
   async function startMonitor(){
     groups=new Map();
     YeastCloud.localSnapshot().forEach(ingest);
@@ -2754,7 +2799,7 @@ body.single-file .topbar{position:sticky;top:0}
       const co2=challengeMode?(g.challenge?.co2??0):(g.current?.co2??g.experiments?.at(-1)?.curve?.at(-1)?.co2??0);
       const minute=challengeMode?(g.challenge?.minute??0):(g.current?.minute??0);
       const reason=challengeMode?(g.challenge?.reason||"FINAL START 대기"):(g.current?.reason||g.experiments?.at(-1)?.reason||"");
-      return `<article class="group-card" data-key="${esc(g.key)}"><div class="group-title"><h3>${esc(g.classId)}반 · ${esc(g.group)}</h3><span class="stage-tag">${stageName(g.stage)}</span></div>
+      return `<article class="group-card" data-key="${esc(g.key)}"><button type="button" class="group-delete-btn" data-delete-key="${esc(g.key)}" title="이 모둠 데이터 삭제">삭제</button><div class="group-title"><h3>${esc(g.classId)}반 · ${esc(g.group)}</h3><span class="stage-tag">${stageName(g.stage)}</span></div>
       <div class="group-meta">${esc(g.members)} · 실험 ${g.experiments?.length||0}회 · ${timeAgo(g.updatedAt)}</div>
       <div class="group-conditions"><span>${YeastSimName(c.substrate)}</span><span>${c.oxygen==="on"?"산소 공급":"산소 공급 없음"}</span><span>${c.sugar??"-"}%</span><span>${c.temp??"-"}℃</span></div>
       <canvas class="mini-canvas" width="360" height="100" data-curve="${esc(g.key)}"></canvas>
@@ -2766,6 +2811,18 @@ body.single-file .topbar{position:sticky;top:0}
       const curve=challengeMode?(g.challenge?.curve||[]):(g.current?.curve||g.latestCurve||[]);
       YeastCharts.drawMini(cv,curve,challengeMode?"#26d9c7":(g.experiments?.at(-1)?.color||"#38bdf8"))
     });
+    document.querySelectorAll(".group-delete-btn").forEach(btn=>btn.addEventListener("click",async e=>{
+      e.stopPropagation();
+      const g=groups.get(btn.dataset.deleteKey);
+      if(!g)return;
+      const ok=window.confirm(`${g.classId}반 · ${g.group} 모둠의 데이터를 삭제할까요?\n삭제한 기록은 교사용 대시보드에서 제거됩니다.`);
+      if(!ok)return;
+      btn.disabled=true;
+      btn.textContent="삭제 중…";
+      await YeastCloud.deleteGroup(g);
+      groups.delete(g.key);
+      render();
+    }));
     document.querySelectorAll(".group-card").forEach(card=>card.addEventListener("click",()=>openDetail(groups.get(card.dataset.key))))
   }
   function openDetail(g){
@@ -2777,7 +2834,7 @@ body.single-file .topbar{position:sticky;top:0}
       <div class="detail-grid"><section><h3>현재 상태</h3><p>${stageName(g.stage)} · ${challengeMode?(g.challenge?.minute??0):(g.current?.minute??0)}/30 min</p><p>${formatConditions(c)}</p><p><b>작성 중:</b> ${esc(currentText)}</p>
       <canvas id="detailGraph" width="720" height="330" style="width:100%;background:#06141f;border-radius:10px"></canvas></section>
       <section><h3>실험 기록</h3>${(g.experiments||[]).map((e,i)=>{const f=e.curve?.at(-1)||{};return `<div class="detail-experiment" style="--card-color:${e.color||"#38bdf8"}"><b>실험 ${i+1}</b><br>${formatConditions(e.conditions)}<br>CO₂ ${Number(f.co2||0).toFixed(1)}mL · 에탄올 ${Number(f.ethanol||0).toFixed(2)}% · O₂ 소비 ${Number(f.o2||0).toFixed(1)}mL · ATP 환산 ${Number(f.atpMmol||0).toFixed(1)}mmol<br>이유: ${esc(e.reason)}</div>`}).join("")||"아직 기록 없음"}</section></div>
-      <hr style="border-color:#24445a"><h3>초기 가설</h3><p>${esc(g.hypothesis||"아직 작성 전")}</p><h3>생각 변화 기록</h3><p>${esc(g.reflection?.changedThinking||"아직 작성 전")}</p><p><b>현재 설명:</b> ${esc(g.reflection?.currentExplanation||"아직 작성 전")}</p>`;
+      <hr style="border-color:#24445a"><h3>초기 가설</h3><p>${esc(g.hypothesis||"아직 작성 전")}</p><h3>생각 변화 기록</h3><p>${esc(g.reflection?.changedThinking||"아직 작성 전")}</p><p><b>현재 설명:</b> ${esc(g.reflection?.currentExplanation||"아직 작성 전")}</p><div class="detail-delete-row"><button id="deleteDetailGroupBtn" class="detail-delete-btn" type="button">이 모둠 데이터 삭제</button></div>`;
     $("groupModal").classList.remove("hidden");
     setTimeout(()=>{
       if(challengeMode && g.challenge?.curve?.length){
@@ -2785,7 +2842,20 @@ body.single-file .topbar{position:sticky;top:0}
       }else{
         YeastCharts.drawSeries($("detailGraph"),g.experiments||[])
       }
-    },20)
+    },20);
+    setTimeout(()=>{
+      const delBtn=$("deleteDetailGroupBtn");
+      if(delBtn) delBtn.addEventListener("click",async()=>{
+        const ok=window.confirm(`${g.classId}반 · ${g.group} 모둠의 데이터를 삭제할까요?`);
+        if(!ok)return;
+        delBtn.disabled=true;
+        delBtn.textContent="삭제 중…";
+        await YeastCloud.deleteGroup(g);
+        groups.delete(g.key);
+        $("groupModal").classList.add("hidden");
+        render();
+      })
+    },0)
   }
   $("closeModalBtn").addEventListener("click",()=>$("groupModal").classList.add("hidden"));
   $("groupModal").addEventListener("click",e=>{if(e.target===$("groupModal"))$("groupModal").classList.add("hidden")});
