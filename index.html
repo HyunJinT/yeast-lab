@@ -998,12 +998,30 @@ body.single-file .topbar{position:sticky;top:0}
 }
 .detail-delete-btn:hover{filter:brightness(1.15)}
 
+
+.top-home-btn{
+  margin-left:auto;
+  border:1px solid #2d526a;
+  background:#091827;
+  color:#d7e7ef;
+  border-radius:10px;
+  padding:9px 13px;
+  font-weight:900;
+  font-size:12px;
+  white-space:nowrap;
+}
+.top-home-btn:hover{
+  border-color:#2ad4c5;
+  color:#ffffff;
+  background:#0b2633;
+}
 </style>
 </head>
 <body class="single-file">
 
 <header class="single-top">
   <div class="brand"><span class="brand-mark">Y</span><b>YEAST LAB</b></div>
+  <button id="topHomeBtn" class="top-home-btn" type="button">처음으로</button>
 </header>
 
 
@@ -1869,6 +1887,7 @@ body.single-file .topbar{position:sticky;top:0}
     document.getElementById('teacherLoginMessage').textContent='';
   }
 
+  document.getElementById('topHomeBtn')?.addEventListener('click',home);
   document.getElementById('openStudentBtn').addEventListener('click',()=>open('student'));
   document.getElementById('openTeacherBtn').addEventListener('click',requestTeacherAccess);
   document.getElementById('teacherPasswordCancel').addEventListener('click',closeTeacherAccess);
