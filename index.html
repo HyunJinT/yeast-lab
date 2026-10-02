@@ -1191,7 +1191,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
 
 <div id="studentContainer" class="hidden">
   <div class="student-statusbar">
-    <span id="studentCloudStatus" class="cloud-status-badge connecting">● Firebase 연결 중</span>
+    <span id="studentCloudStatus" class="cloud-status-badge connecting">연결 중</span>
     <button id="thinkerBellBtn" class="thinkerbell-btn disabled" type="button" aria-disabled="true">띵커벨 보드 ↗</button>
     <span id="studentIdentity" class="pill muted">미입장</span>
     
@@ -2216,7 +2216,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     const ok=YeastCloud.isCloud();
     badge.classList.remove("connecting","online","error");
     badge.classList.add(ok?"online":"error");
-    badge.textContent=ok?"● 실시간 연결됨":"● Firebase 연결 오류";
+    badge.textContent=ok?"연결됨":"연결안됨";
     if(ok && state.classId && state.group) sync();
     if(!ok){
       console.warn("Firebase connection error:",YeastCloud.error());
