@@ -1072,6 +1072,14 @@ body.single-file .topbar{position:sticky;top:0}
   background:#0a2736;
   box-shadow:0 0 0 10px rgba(38,217,199,.06),0 22px 42px rgba(0,0,0,.30);
 }
+
+.cloud-status-badge{
+  padding:7px 10px;border-radius:999px;border:1px solid #345166;
+  font-size:10px;font-weight:900;white-space:nowrap
+}
+.cloud-status-badge.connecting{color:#f4cf75;background:rgba(251,191,36,.08);border-color:rgba(251,191,36,.35)}
+.cloud-status-badge.online{color:#7ff3d8;background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.38)}
+.cloud-status-badge.error{color:#ff9aaa;background:rgba(251,113,133,.08);border-color:rgba(251,113,133,.42)}
 </style>
 </head>
 <body class="single-file">
@@ -1125,6 +1133,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
 
 <div id="studentContainer" class="hidden">
   <div class="student-statusbar">
+    <span id="studentCloudStatus" class="cloud-status-badge connecting">● Firebase 연결 중</span>
     <button id="thinkerBellBtn" class="thinkerbell-btn disabled" type="button" aria-disabled="true">띵커벨 보드 ↗</button>
     <span id="studentIdentity" class="pill muted">미입장</span>
     
@@ -1593,14 +1602,14 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
 </div>
 
 <script>window.YEAST_FIREBASE_CONFIG = {
-    apiKey: "AIzaSyBCwV1NAGzbOqHRjCEjqgKPQ4dcF3IRTWM",
+    apiKey: "AIzaSyBCwYINAGzbOqHRjCEjqgKPQ4dcF3IRTWM",
     authDomain: "yeast-lab.firebaseapp.com",
     databaseURL: "https://yeast-lab-default-rtdb.firebaseio.com",
     projectId: "yeast-lab",
     storageBucket: "yeast-lab.firebasestorage.app",
     messagingSenderId: "108753928170",
     appId: "1:108753928170:web:b9c5b73a57b14a0ce2bc93",
-    measurementId: "G-N0VCE03521"
+    measurementId: "G-NOVCE03521"
   };</script>
 <script>(() => {
   const colors = ["#38bdf8","#34d399","#fb923c","#a78bfa","#fb7185","#facc15","#22d3ee"];
@@ -1900,7 +1909,10 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
   window.YeastCloud={
     publish,subscribeLocal,subscribeCloud,localSnapshot,deleteGroup,
     controlSnapshot,publishControl,subscribeControlLocal,subscribeControlCloud,
-    isCloud:()=>cloudReady,status:()=>cloudReady?"Firebase 연결됨":(cloudError?"Firebase 오류":"로컬/데모 모드")
+    isCloud:()=>cloudReady,
+    status:()=>cloudReady?"Firebase 실시간 연결됨":(cloudError?"Firebase 연결 오류":"Firebase 연결 중"),
+    error:()=>cloudError,
+    whenReady:()=>cloudPromise
   };
 })();</script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -2096,6 +2108,21 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
       latestCurve:last?.curve||[],updatedAt:Date.now(),...extra
     })
   }
+  async function updateStudentCloudStatus(){
+    const badge=$("studentCloudStatus");
+    if(!badge)return;
+    await YeastCloud.whenReady();
+    const ok=YeastCloud.isCloud();
+    badge.classList.remove("connecting","online","error");
+    badge.classList.add(ok?"online":"error");
+    badge.textContent=ok?"● 실시간 연결됨":"● Firebase 연결 오류";
+    if(ok && state.classId && state.group) sync();
+    if(!ok){
+      console.warn("Firebase connection error:",YeastCloud.error());
+      badge.title=YeastCloud.error()||"Firebase 연결 오류";
+    }
+  }
+  updateStudentCloudStatus();
   function applyChallengeGate(enabled){
     challengeUnlocked=!!enabled;
     const btn=$("challengeGateBtn");
@@ -2816,7 +2843,9 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     });
     YeastCloud.subscribeControlLocal(onControl);
     controlCloudUnsub=await YeastCloud.subscribeControlCloud(onControl);
-    $("syncNotice").textContent=`동기화 상태: ${YeastCloud.status()} · 같은 브라우저에서는 실시간 표시됩니다. 학생·교사 기기가 다르면 Firebase 연결이 필요합니다.`;
+    $("syncNotice").textContent=YeastCloud.isCloud()
+      ? "동기화 상태: Firebase 실시간 연결됨 · 다른 컴퓨터의 학생 데이터도 자동으로 표시됩니다."
+      : `동기화 상태: Firebase 연결 오류 · ${YeastCloud.error()||"연결 설정을 확인하세요."}`;
     renderChallengeControls();render();
     if(teacherTicker)clearInterval(teacherTicker);
     teacherTicker=setInterval(()=>render(),1000)
@@ -2902,7 +2931,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
       ["접속 모둠",all.length],["실험 중",active.length],["생각 정리",reflect.length],["연구 완료",done.length],["챌린지",challenge.length]
     ].map(([a,b])=>`<div class="stat-card"><span>${a}</span><strong>${b}</strong></div>`).join("");
     const grid=$("groupGrid");
-    if(!all.length){grid.innerHTML='<div class="empty-state">아직 표시할 모둠이 없습니다. 학생용 페이지를 같은 브라우저의 다른 탭에서 실행하거나 Firebase를 연결하세요.</div>';return}
+    if(!all.length){grid.innerHTML='<div class="empty-state">아직 표시할 모둠이 없습니다. 학생 컴퓨터에서 실시간 연결됨 표시를 확인한 뒤 모둠 정보를 입력해보세요.</div>';return}
     grid.innerHTML=all.map(g=>{
       const challengeMode=g.stage==="challenge"||g.challenge?.startedAt;
       const liveChallenge=challengeMode?liveChallengeSnapshot(g):null;
