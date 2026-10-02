@@ -1,0 +1,2808 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>YEAST LAB · 단일 HTML v3.3</title>
+<style>
+
+:root{
+  --bg:#06111d; --panel:#0b1b2d; --panel2:#0f2438; --line:#1f4059;
+  --text:#edf6fb; --muted:#8fa9bb; --teal:#26d9c7; --cyan:#38bdf8;
+  --warn:#fbbf24; --danger:#fb7185; --good:#34d399;
+  --shadow:0 18px 45px rgba(0,0,0,.28);
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;background:
+  radial-gradient(circle at 18% 8%,rgba(29,102,137,.22),transparent 30%),
+  linear-gradient(180deg,#07101b,#06111d 62%,#050d16);color:var(--text);
+  font-family:Inter,"Pretendard","Malgun Gothic",system-ui,sans-serif;min-height:100vh}
+button,input,select,textarea{font:inherit}
+button,a{ -webkit-tap-highlight-color:transparent}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer}
+.hidden{display:none!important}
+.glass{background:linear-gradient(180deg,rgba(15,36,56,.94),rgba(8,25,41,.94));border:1px solid rgba(95,158,196,.26);box-shadow:var(--shadow)}
+.topbar{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid #16334a;background:rgba(4,14,24,.95);position:sticky;top:0;z-index:20}
+.brand{display:flex;align-items:center;gap:10px}.brand-mark{width:34px;height:34px;border-radius:10px;border:1px solid #2fa8bf;display:grid;place-items:center;background:#0a2736;color:#c9fbff;font-weight:900}.brand b{letter-spacing:.06em}.brand small{color:var(--muted);margin-left:5px}
+.top-actions{display:flex;gap:8px;align-items:center}.pill{padding:8px 11px;border:1px solid #27465d;border-radius:999px;color:#bdd0dd;font-size:13px}.pill.muted{opacity:.8}
+.app-shell{max-width:1800px;margin:0 auto;padding:16px 20px 28px}.view{display:none}.view.active{display:block}
+.view-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:14px}.view-head.compact{align-items:center}.view-head h1{margin:3px 0 4px;font-size:25px}.view-head p{margin:0;color:var(--muted);font-size:14px}.step-kicker{font-size:11px;letter-spacing:.18em;color:#5fe8dc;font-weight:800}.head-left,.head-actions{display:flex;align-items:center;gap:15px}.head-actions{flex-wrap:wrap}
+.back-btn,.ghost-btn,.secondary-btn,.primary-btn{border-radius:11px;padding:10px 14px;border:1px solid #294b63;font-weight:800;transition:.16s}
+.back-btn,.ghost-btn{background:#091827;color:#c9d9e3}.secondary-btn{background:#102b40;color:#e3f4fb}.primary-btn{background:linear-gradient(135deg,#0aa99a,#1d91b3);color:white;border-color:#25b7b1}.full{width:100%}.primary-btn:hover,.secondary-btn:hover,.back-btn:hover{filter:brightness(1.12)}
+.panel{border-radius:18px;padding:14px;min-width:0}.panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.panel-head span{color:#6dcbd3;font-size:11px;letter-spacing:.04em}.panel-head b{font-size:15px}
+label{display:block;font-size:13px;font-weight:800;color:#d9e8f0}input,select,textarea{width:100%;border:1px solid #2b4c62;background:#081827;color:#eef8fb;border-radius:10px;padding:10px 11px;outline:none}input:focus,select:focus,textarea:focus{border-color:#27c8bb;box-shadow:0 0 0 3px rgba(38,217,199,.10)}textarea{resize:vertical;min-height:65px}.form-error{min-height:20px;color:#ff9aac;font-size:13px;margin:8px 0 0}.warning{padding:8px 10px;border:1px solid rgba(251,191,36,.42);background:rgba(251,191,36,.08);color:#f8d77b;border-radius:10px;font-size:12px;margin-top:8px}.model-note{color:var(--muted);font-size:12px;line-height:1.5}
+.landing{display:grid;place-items:center;padding:28px}.landing-shell{width:min(1100px,100%)}.hero-panel{padding:42px;border-radius:28px;text-align:center}.eyebrow{color:#63e6dc;font-size:12px;letter-spacing:.24em}.hero-panel h1{font-size:clamp(52px,8vw,90px);margin:9px 0 8px;letter-spacing:.05em}.hero-copy{color:#b8cad6;font-size:18px}.hero-flow{display:flex;justify-content:center;gap:9px;flex-wrap:wrap;margin:30px auto}.hero-flow span{background:#0d2639;border:1px solid #24516b;padding:9px 12px;border-radius:10px}.hero-flow i{font-style:normal;color:#4c829f;align-self:center}.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.role-card{display:flex;text-align:left;align-items:center;gap:15px;padding:20px;border-radius:16px;border:1px solid #294d66;background:#091b2c;transition:.18s}.role-card:hover{transform:translateY(-2px);border-color:#2bcbc1}.role-icon{width:52px;height:52px;display:grid;place-items:center;border-radius:14px;background:#0f3c47;color:#8cf9ef;font-size:22px;font-weight:900}.role-card strong{display:block;font-size:18px}.role-card span{display:block;margin-top:5px;color:#8fa9bb;font-size:13px}
+.join-grid{display:grid;grid-template-columns:minmax(360px,.75fr) 1.25fr;gap:18px}.join-grid .panel{padding:24px}.join-grid label{margin:14px 0 7px}.class-picker{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.class-picker button,.class-tabs button{border:1px solid #2a4c63;background:#091928;color:#bcd0dc;border-radius:10px;padding:10px;font-weight:800}.class-picker button.active,.class-tabs button.active{background:#0c4c52;border-color:#26d9c7;color:#fff}.briefing h2{font-size:28px;max-width:650px}.briefing ol{color:#bcd0da;line-height:2}
+.lab-layout{display:grid;grid-template-columns:28% 46% 26%;gap:12px;min-height:660px}.scene-panel,.graph-controls-panel,.log-panel{height:660px;overflow:hidden}.scene-grid{display:grid;grid-template-columns:112px 1fr;gap:10px;height:365px}.sensor-stack{display:flex;flex-direction:column;gap:8px}.sensor{background:#071724;border:1px solid #1e465f;border-radius:10px;padding:10px}.sensor span{display:block;color:#6f9ab4;font-size:10px;letter-spacing:.05em}.sensor strong{display:block;margin-top:4px;font-size:16px;color:#dffbff}.vessel-wrap{position:relative;display:flex;align-items:center;justify-content:center;border:1px solid #1d4059;border-radius:14px;background-image:linear-gradient(rgba(35,80,107,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(35,80,107,.12) 1px,transparent 1px);background-size:25px 25px}.vessel{position:relative;width:185px;height:265px;border:6px solid #73a7bd;border-radius:12px 12px 68px 68px;overflow:hidden;background:rgba(6,20,32,.45);box-shadow:inset 0 0 22px rgba(117,197,225,.08)}.vessel-neck{position:absolute;top:-5px;left:58px;width:58px;height:62px;border-left:6px solid #73a7bd;border-right:6px solid #73a7bd;z-index:3}.liquid{position:absolute;left:0;right:0;bottom:0;height:54%;background:linear-gradient(180deg,#b99a4b,#70542b);opacity:.9}.pellet{position:absolute;left:0;right:0;bottom:0;height:25px;background:radial-gradient(circle,#c28a49 2px,transparent 3px);background-size:10px 10px}.bubble-layer{position:absolute;inset:0;overflow:hidden;z-index:4}.bubble{position:absolute;border:1px solid rgba(190,244,255,.85);background:rgba(92,222,232,.15);border-radius:50%;bottom:34px;animation:bubbleRise 1.8s linear forwards}@keyframes bubbleRise{to{transform:translateY(-205px);opacity:0}}.vessel-caption{position:absolute;bottom:8px;display:flex;gap:6px;flex-wrap:wrap;justify-content:center}.vessel-caption span{padding:5px 7px;background:#061522;border:1px solid #244860;border-radius:7px;font-size:10px;color:#9cb8c8}.mini-meters{display:grid;gap:8px;margin-top:10px}.mini-meters>div{display:grid;grid-template-columns:80px 1fr 52px;gap:8px;align-items:center;font-size:11px;color:#9cb4c2}.meter{height:8px;background:#071521;border-radius:20px;overflow:hidden}.meter i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#1a96aa,#35d7c6);transition:width .3s}.mini-meters b{text-align:right;color:#e0f7fa}
+.graph-box{height:270px;border:1px solid #1c4058;border-radius:12px;background:#06141f;padding:5px}.graph-box canvas{width:100%;height:100%}.controls-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}.controls-grid label{background:#091a29;border:1px solid #1c3e55;border-radius:9px;padding:7px}.controls-grid select{padding:6px;margin-top:5px}.controls-grid input[type=range]{padding:0;margin-top:7px}.controls-grid output{float:right;color:#63e6dc}.changed-box{background:#091a29;border:1px solid #1c3e55;border-radius:9px;padding:8px}.changed-box span{display:block;color:#799bae;font-size:10px}.changed-box strong{display:block;margin-top:4px;font-size:12px}.reason-row{display:grid;grid-template-columns:1fr 120px;gap:8px;margin-top:8px}.reason-row label{grid-column:1/-1}.reason-row label span{float:right;color:#78a1b7;font-size:10px}.reason-row textarea{height:57px;min-height:57px;resize:none}.reason-row .primary-btn{height:57px}.experiment-log{height:595px;overflow:auto;padding-right:4px}.empty-state{border:1px dashed #2b526c;border-radius:12px;color:#69899b;font-size:13px;padding:18px;text-align:center}.log-card{border:1px solid #244158;border-left:5px solid var(--card-color,#38bdf8);border-radius:11px;padding:9px 10px;margin-bottom:8px;background:#081827;font-size:11px}.log-card h3{margin:0 0 5px;font-size:13px}.log-card p{margin:3px 0;color:#a9bfcb}.log-card .results{display:grid;grid-template-columns:repeat(2,1fr);gap:4px;margin-top:6px}.result-chip{padding:4px 5px;background:#0d2334;border-radius:6px;color:#cfe2eb}.color-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--dot);margin-right:5px}
+.reflection-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:14px}.evidence-panel canvas{width:100%;height:330px;background:#06141f;border:1px solid #1b4058;border-radius:12px}.evidence-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-top:10px}.evidence-card{border-left:4px solid var(--card-color);background:#081827;padding:8px;border-radius:8px;font-size:11px}.writing-panel{display:grid;gap:7px}.writing-panel textarea{min-height:72px}
+.research-poster{background:#eff6f8;color:#10202b;border-radius:18px;padding:25px;box-shadow:0 20px 50px rgba(0,0,0,.25)}.poster-top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0f5363;padding-bottom:13px}.poster-top .step-kicker{color:#0b7182}.poster-top h2{font-size:32px;margin:5px 0}.poster-id{text-align:right;font-weight:800;color:#3e5967}.poster-grid{display:grid;grid-template-columns:.9fr 1.25fr .9fr;gap:15px;margin-top:15px}.poster-col article{background:white;border:1px solid #cad9df;border-radius:10px;padding:12px;margin-bottom:9px}.poster-col article span{font-size:11px;color:#0e7080;font-weight:900;letter-spacing:.04em}.poster-col article p{margin:6px 0 0;font-size:13px;line-height:1.5}.poster-col article.accent{background:#dff5f3;border-color:#83c8c3}.poster-chart canvas{width:100%;background:white;border-radius:10px}.poster-trials{font-size:11px;color:#425c68;margin-top:7px;display:grid;gap:5px}
+.concept-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:14px}.pathway-panel,.energy-panel{padding:22px}.pathway{text-align:center}.path-node{display:inline-block;padding:12px 24px;border-radius:10px}.path-node.main{background:#0a2d3c;border:1px solid #2f7d89}.path-node small{display:block;color:#8cd8da;margin-top:4px}.path-arrow{font-size:28px;color:#57b5c4}.branch{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:5px}.branch>div{display:grid;grid-template-columns:1fr 30px 1.3fr;gap:4px;align-items:center;background:#071925;border:1px solid #1f4a62;border-radius:12px;padding:12px}.branch i{font-style:normal;color:#5eced2}.branch span{color:#cdf0ef}.concept-alert{margin-top:14px;padding:12px;border:1px solid #5a4c2a;background:#272111;border-radius:10px;color:#f5d984;line-height:1.55}.energy-chain{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:24px 0}.energy-chain span{background:#0a2838;border:1px solid #28546c;padding:10px;border-radius:9px}.energy-chain i{font-style:normal;color:#4d899f}
+.challenge-layout{display:grid;grid-template-columns:.75fr 1.25fr;gap:14px}.challenge-rules{padding:10px;background:#081a28;border-radius:10px;margin-bottom:12px}.challenge-rules span{color:#6ee3d8;font-size:11px;margin-right:10px}.challenge-controls{display:grid;gap:10px}.challenge-live canvas{width:100%;background:#06141f;border:1px solid #1c4058;border-radius:12px}.challenge-value{display:inline-flex;gap:9px;align-items:baseline;margin-right:18px}.challenge-value span{color:#739bb0;font-size:11px}.challenge-value strong{font-size:24px}.challenge-result{margin-top:10px;padding:11px;border-radius:9px;background:#0a2130;color:#d3e6ee}
+.teacher-login{width:min(520px,92vw);padding:26px;border-radius:18px;margin:80px auto}.teacher-login h1{margin-bottom:7px}.teacher-login input{margin:12px 0}.class-tabs{display:flex;gap:8px;margin-bottom:12px}.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:12px}.stat-card{background:#0a1d2c;border:1px solid #1c4058;border-radius:12px;padding:12px}.stat-card span{display:block;color:#789caf;font-size:11px}.stat-card strong{font-size:25px}.sync-notice{font-size:12px;color:#87aabb;margin:6px 0 10px}.group-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.group-card{background:#091a29;border:1px solid #23465d;border-radius:14px;padding:12px;min-width:0;cursor:pointer}.group-card:hover{border-color:#29c7bc}.group-card .group-title{display:flex;justify-content:space-between;gap:8px}.group-card h3{margin:0;font-size:15px}.stage-tag{padding:4px 7px;border-radius:999px;background:#0c3d46;color:#95f4ec;font-size:10px}.group-meta{color:#8da9b7;font-size:11px;margin:4px 0 8px}.group-conditions{display:grid;grid-template-columns:repeat(2,1fr);gap:5px;font-size:10px}.group-conditions span{padding:5px;background:#0d2232;border-radius:6px}.mini-canvas{width:100%;height:85px;background:#06141f;border-radius:8px;margin-top:8px}.typing-preview{font-size:10px;color:#a9c1cc;margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.modal{position:fixed;inset:0;background:rgba(1,7,12,.78);display:grid;place-items:center;padding:20px;z-index:40}.modal-card{width:min(1100px,94vw);max-height:90vh;overflow:auto;border-radius:18px;padding:22px;position:relative}.modal-close{position:absolute;right:13px;top:10px;border:0;background:transparent;color:white;font-size:27px}.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.detail-experiment{background:#081827;border-left:4px solid var(--card-color);padding:10px;border-radius:8px;font-size:12px;margin-bottom:7px}
+@media(max-width:1180px){.lab-layout{grid-template-columns:1fr 1.4fr}.log-panel{grid-column:1/-1;height:auto}.experiment-log{height:210px;display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.scene-panel,.graph-controls-panel{height:auto}.group-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){.app-shell{padding:12px}.role-grid,.join-grid,.reflection-grid,.concept-grid,.challenge-layout,.poster-grid{grid-template-columns:1fr}.lab-layout{display:block}.scene-panel,.graph-controls-panel,.log-panel{height:auto;margin-bottom:10px}.controls-grid{grid-template-columns:1fr 1fr}.reason-row{grid-template-columns:1fr}.reason-row label{grid-column:auto}.experiment-log{height:auto;display:block}.stats-grid{grid-template-columns:repeat(2,1fr)}.group-grid{grid-template-columns:1fr}.branch{grid-template-columns:1fr}.poster-id{text-align:left}.view-head,.head-left{align-items:flex-start;flex-direction:column}.topbar{padding:0 12px}.brand small{display:none}}
+
+body.single-file .topbar{position:sticky;top:0}
+.single-top{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid #16334a;background:rgba(4,14,24,.95);position:sticky;top:0;z-index:30}
+.single-top .brand{cursor:default;user-select:none}
+#landingView{padding:28px}
+#landingView .landing-shell{margin:40px auto}
+.role-card{width:100%;color:inherit}
+.student-statusbar{display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:10px 20px 0;max-width:1800px;margin:0 auto}
+
+.locked-btn:disabled{
+  cursor:not-allowed; opacity:.62; filter:saturate(.45);
+  background:#122433; border-color:#39566a; color:#9fb3bf;
+}
+.challenge-ready{
+  animation:gatePulse 1.6s ease-in-out infinite;
+  box-shadow:0 0 0 0 rgba(38,217,199,.35);
+}
+@keyframes gatePulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(38,217,199,.18)}
+  50%{box-shadow:0 0 0 7px rgba(38,217,199,0)}
+}
+.teacher-control-panel{
+  border-radius:16px;padding:15px 16px;margin:0 0 12px;
+}
+.teacher-control-head h2{margin:3px 0 4px;font-size:18px}
+.teacher-control-head p{margin:0 0 12px;color:var(--muted);font-size:12px}
+.challenge-control-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.challenge-toggle{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  min-height:56px;padding:10px 13px;border-radius:11px;
+  border:1px solid #35536a;background:#091927;color:#d7e5ed;font-weight:800;
+}
+.challenge-toggle span{font-size:15px}
+.challenge-toggle strong{font-size:12px;color:#a8bac6}
+.challenge-toggle.enabled{
+  border-color:#27d3c2;background:linear-gradient(135deg,#0a4a4b,#0c3544);
+  box-shadow:0 0 0 3px rgba(38,217,199,.08)
+}
+.challenge-toggle.enabled strong{color:#8dfff4}
+@media(max-width:760px){.challenge-control-grid{grid-template-columns:1fr}}
+
+
+/* v1.6 realistic apparatus override */
+.realistic-wrap{
+  position:relative!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-height:365px;
+  border:1px solid #1d4059!important;
+  border-radius:14px!important;
+  background:
+    radial-gradient(circle at 50% 22%,rgba(48,115,144,.12),transparent 42%),
+    linear-gradient(rgba(35,80,107,.11) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(35,80,107,.11) 1px,transparent 1px),
+    #071724!important;
+  background-size:auto,25px 25px,25px 25px,auto!important;
+  overflow:hidden;
+  padding:8px 8px 38px;
+}
+.apparatus-stage{
+  position:relative;
+  width:220px;
+  height:315px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+}
+.tube-shadow{
+  position:absolute;
+  left:48px; right:48px; bottom:4px;
+  height:18px;
+  border-radius:50%;
+  background:rgba(0,0,0,.38);
+  filter:blur(7px);
+}
+.stopper{
+  position:absolute;
+  z-index:7;
+  top:1px;
+  left:72px;
+  width:76px;
+  height:35px;
+  border-radius:9px 9px 5px 5px;
+  border:1px solid rgba(229,238,244,.48);
+  background:linear-gradient(90deg,#69747d,#aab5bd 23%,#818d96 55%,#c1cbd1 76%,#6c7880);
+  box-shadow:0 4px 10px rgba(0,0,0,.3), inset 0 1px 1px rgba(255,255,255,.35);
+}
+.stopper span{
+  position:absolute;top:7px;bottom:7px;width:1px;background:rgba(38,50,59,.38)
+}
+.stopper span:nth-child(1){left:22px}.stopper span:nth-child(2){left:38px}.stopper span:nth-child(3){left:54px}
+.test-tube{
+  position:absolute;
+  top:25px;
+  width:122px;
+  height:272px;
+  border:4px solid rgba(157,205,229,.72);
+  border-top-width:5px;
+  border-radius:10px 10px 55px 55px / 10px 10px 42px 42px;
+  overflow:hidden;
+  background:linear-gradient(90deg,
+    rgba(196,230,245,.07) 0%,
+    rgba(255,255,255,.18) 12%,
+    rgba(131,187,215,.05) 28%,
+    rgba(220,243,252,.10) 70%,
+    rgba(255,255,255,.18) 87%,
+    rgba(120,180,210,.06) 100%);
+  box-shadow:
+    0 16px 24px rgba(0,0,0,.28),
+    inset 0 0 18px rgba(164,215,238,.10);
+}
+.test-tube:before{
+  content:"";
+  position:absolute;z-index:6;
+  top:5px;left:10px;right:10px;height:1px;
+  background:rgba(236,250,255,.52);
+}
+.glass-highlight{
+  position:absolute;z-index:5;pointer-events:none;border-radius:999px;
+  background:rgba(255,255,255,.22);
+  filter:blur(.3px);
+}
+.glass-highlight.one{top:23px;left:15px;width:7px;height:190px}
+.glass-highlight.two{top:46px;right:18px;width:3px;height:148px;opacity:.5}
+.graduation-marks{
+  position:absolute;z-index:6;right:5px;top:38px;width:25px;height:165px;
+}
+.graduation-marks i{
+  display:block;width:17px;height:1px;background:rgba(214,239,249,.43);margin-bottom:22px;
+}
+.graduation-marks i:nth-child(even){width:11px;margin-left:6px}
+.liquid-real{
+  position:absolute;z-index:2;left:3px;right:3px;bottom:3px;height:54%;
+  border-radius:0 0 48px 48px / 0 0 38px 38px;
+  background:linear-gradient(90deg,#9a7138 0%,#d3b06f 26%,#bb914f 64%,#84602e 100%);
+  box-shadow:inset 0 7px 10px rgba(255,255,255,.08), inset 0 -10px 18px rgba(65,42,19,.18);
+  transition:height .35s ease,filter .35s ease,opacity .35s ease;
+  overflow:visible;
+}
+.liquid-surface{
+  position:absolute;left:0;right:0;top:-5px;height:10px;border-radius:50%;
+  background:linear-gradient(90deg,#b18c52,#e2c68b 38%,#c29d5f);
+  border-top:1px solid rgba(246,231,192,.52);
+  box-shadow:0 -1px 5px rgba(244,226,180,.12);
+}
+.yeast-sediment{
+  position:absolute;z-index:4;left:16px;right:16px;bottom:8px;height:20px;
+  border-radius:50%;
+  background:radial-gradient(ellipse at center,#bd8745,#7c5228 72%);
+  box-shadow:0 -2px 4px rgba(75,43,17,.35);
+  opacity:.92;
+  transition:opacity .3s;
+}
+.yeast-sediment b{
+  position:absolute;width:4px;height:4px;border-radius:50%;background:#d0a060;opacity:.74
+}
+.yeast-sediment b:nth-child(1){left:13px;top:5px}.yeast-sediment b:nth-child(2){left:27px;top:10px}
+.yeast-sediment b:nth-child(3){left:39px;top:5px}.yeast-sediment b:nth-child(4){left:53px;top:9px}
+.yeast-sediment b:nth-child(5){left:66px;top:5px}.yeast-sediment b:nth-child(6){left:76px;top:10px}
+.yeast-sediment b:nth-child(7){left:33px;top:14px}.yeast-sediment b:nth-child(8){left:60px;top:14px}
+.bubble-layer-real{
+  position:absolute;z-index:5;inset:0;
+  overflow:hidden;
+  pointer-events:none;
+}
+.gas-bubble{
+  position:absolute;
+  border-radius:50%;
+  border:1px solid rgba(235,250,255,.78);
+  background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.78) 0 12%,rgba(198,239,250,.20) 18%,rgba(132,215,237,.06) 68%);
+  box-shadow:inset 1px 1px 2px rgba(255,255,255,.26);
+  will-change:transform,opacity;
+}
+.tube-label{
+  position:absolute;bottom:1px;
+  font-size:9px;letter-spacing:.16em;color:#68899b;
+}
+.realistic-wrap .vessel-caption{
+  position:absolute!important;bottom:8px!important;left:8px;right:8px;
+  display:flex!important;justify-content:center!important;gap:6px!important;z-index:8;
+}
+.realistic-wrap .vessel-caption span{
+  padding:5px 8px!important;background:rgba(5,19,30,.88)!important;
+  border:1px solid #284b61!important;border-radius:999px!important;
+  font-size:10px!important;color:#b5cbd7!important;
+}
+
+
+/* v1.7: fixed liquid volume + more realistic yeast suspension/sediment */
+.liquid-real{
+  height:54%!important;                 /* 실험 동안 용액 부피는 일정 */
+  transition:filter .35s ease,opacity .35s ease!important;
+  background:
+    linear-gradient(90deg,
+      rgba(134,99,49,.96) 0%,
+      rgba(210,177,110,.95) 24%,
+      rgba(192,148,77,.96) 62%,
+      rgba(121,84,39,.97) 100%)!important;
+}
+.liquid-real:after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:1;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at 18% 34%,rgba(255,255,255,.035) 0 1px,transparent 1.5px),
+    radial-gradient(circle at 72% 57%,rgba(58,35,15,.10) 0 1.2px,transparent 1.8px),
+    radial-gradient(circle at 42% 76%,rgba(255,255,255,.04) 0 1px,transparent 1.7px);
+  background-size:21px 19px,27px 23px,31px 29px;
+  opacity:.65;
+}
+.liquid-surface{
+  z-index:3!important;
+  height:8px!important;
+  top:-4px!important;
+  background:linear-gradient(90deg,#aa834a,#ddc183 42%,#b18a50)!important;
+  border-top:1px solid rgba(246,231,192,.48)!important;
+}
+.yeast-suspension{
+  position:absolute;
+  inset:0;
+  z-index:2;
+  pointer-events:none;
+  opacity:.58;
+}
+.yeast-suspension i{
+  position:absolute;
+  width:2.6px;height:2.6px;border-radius:50%;
+  background:rgba(117,72,32,.56);
+  box-shadow:0 0 2px rgba(62,37,18,.35);
+}
+.yeast-suspension i:nth-child(1){left:13%;top:18%}.yeast-suspension i:nth-child(2){left:28%;top:31%}
+.yeast-suspension i:nth-child(3){left:45%;top:20%}.yeast-suspension i:nth-child(4){left:63%;top:36%}
+.yeast-suspension i:nth-child(5){left:79%;top:24%}.yeast-suspension i:nth-child(6){left:20%;top:51%}
+.yeast-suspension i:nth-child(7){left:38%;top:58%}.yeast-suspension i:nth-child(8){left:55%;top:48%}
+.yeast-suspension i:nth-child(9){left:74%;top:63%}.yeast-suspension i:nth-child(10){left:87%;top:47%}
+.yeast-suspension i:nth-child(11){left:16%;top:74%}.yeast-suspension i:nth-child(12){left:31%;top:82%}
+.yeast-suspension i:nth-child(13){left:48%;top:70%}.yeast-suspension i:nth-child(14){left:61%;top:84%}
+.yeast-suspension i:nth-child(15){left:77%;top:77%}.yeast-suspension i:nth-child(16){left:89%;top:68%}
+.yeast-suspension i:nth-child(17){left:52%;top:39%}.yeast-suspension i:nth-child(18){left:34%;top:44%}
+
+.yeast-sediment{
+  left:12px!important;right:12px!important;bottom:6px!important;
+  height:27px!important;
+  border-radius:42% 58% 48% 52% / 60% 58% 42% 40%!important;
+  background:
+    radial-gradient(ellipse at 45% 20%,rgba(207,157,91,.65),transparent 38%),
+    linear-gradient(180deg,#9e6c36 0%,#7b4e27 55%,#5e391e 100%)!important;
+  box-shadow:
+    0 -2px 5px rgba(73,43,21,.35),
+    inset 0 2px 4px rgba(225,177,107,.20),
+    inset 0 -4px 6px rgba(61,35,18,.42)!important;
+  overflow:visible;
+  transform-origin:center bottom;
+}
+.yeast-sediment:before{
+  content:"";
+  position:absolute;
+  left:4px;right:3px;top:-5px;height:10px;
+  border-radius:50%;
+  background:
+    radial-gradient(ellipse at 20% 70%,#9f6a36 0 18%,transparent 20%),
+    radial-gradient(ellipse at 43% 55%,#b27d42 0 22%,transparent 24%),
+    radial-gradient(ellipse at 66% 70%,#87572d 0 20%,transparent 22%),
+    radial-gradient(ellipse at 84% 52%,#a8733b 0 15%,transparent 17%);
+  opacity:.92;
+}
+.sediment-mass{
+  position:absolute;
+  display:block;
+  border-radius:50%;
+  background:radial-gradient(circle at 38% 32%,#c29153 0 18%,#9b6737 48%,#6e4425 100%);
+  opacity:.82;
+}
+.mass-a{width:18px;height:9px;left:9px;top:4px;transform:rotate(-8deg)}
+.mass-b{width:22px;height:11px;left:29px;top:0px;transform:rotate(6deg)}
+.mass-c{width:19px;height:9px;right:25px;top:5px;transform:rotate(-4deg)}
+.mass-d{width:14px;height:8px;right:8px;top:2px;transform:rotate(11deg)}
+.yeast-sediment b{
+  width:3.2px!important;height:3.2px!important;
+  background:#c28d50!important;
+  box-shadow:0 0 1px rgba(54,31,17,.45);
+  opacity:.76!important;
+}
+.yeast-sediment b:nth-of-type(1){left:10px;top:11px}
+.yeast-sediment b:nth-of-type(2){left:20px;top:16px}
+.yeast-sediment b:nth-of-type(3){left:31px;top:9px}
+.yeast-sediment b:nth-of-type(4){left:41px;top:18px}
+.yeast-sediment b:nth-of-type(5){left:52px;top:11px}
+.yeast-sediment b:nth-of-type(6){left:63px;top:16px}
+.yeast-sediment b:nth-of-type(7){left:73px;top:8px}
+.yeast-sediment b:nth-of-type(8){left:82px;top:17px}
+.yeast-sediment b:nth-of-type(9){left:16px;top:21px}
+.yeast-sediment b:nth-of-type(10){left:35px;top:22px}
+.yeast-sediment b:nth-of-type(11){left:58px;top:22px}
+.yeast-sediment b:nth-of-type(12){left:77px;top:21px}
+
+
+/* v1.9 hypothesis + report evidence log */
+.hypothesis-box{
+  margin:0 0 8px;padding:8px 10px;border:1px solid #24506a;border-radius:10px;
+  background:linear-gradient(180deg,#0a2131,#081a28);
+}
+.hypothesis-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:5px}
+.hypothesis-head label{color:#dff8f6;font-size:12px}
+.hypothesis-head span{font-size:10px;color:#70a7b8}
+.hypothesis-box textarea{min-height:50px;height:50px;resize:none;padding:8px 9px;font-size:11px;line-height:1.35}
+.hypothesis-box.locked{border-color:#365164;background:#0a1824}
+.hypothesis-box.locked textarea{color:#a8bdc8;background:#07141e;cursor:not-allowed;opacity:.82}
+.hypothesis-box.locked .hypothesis-head span{color:#8de9df}
+
+.initial-hypothesis-review{
+  padding:11px 12px;border:1px solid #28616a;border-radius:10px;background:#0a242d;margin-bottom:2px
+}
+.initial-hypothesis-review>span{font-size:11px;color:#70dfd5;font-weight:900;letter-spacing:.04em}
+.initial-hypothesis-review p{margin:6px 0 4px;color:#e6f4f6;font-size:13px;line-height:1.45}
+.initial-hypothesis-review small{color:#7397a8;font-size:10px}
+
+.poster-design-section{margin-top:15px;border-top:2px solid #b8cdd5;padding-top:12px}
+.poster-section-title{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:8px}
+.poster-section-title span{font-size:10px;letter-spacing:.12em;color:#0b7182;font-weight:900}
+.poster-section-title b{font-size:15px;color:#183746}
+.poster-experiment-reasons{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}
+.poster-exp-card{
+  background:#fff;border:1px solid #c8d8de;border-left:5px solid var(--card-color,#38bdf8);
+  border-radius:9px;padding:9px 10px;min-height:92px
+}
+.poster-exp-card h4{margin:0 0 4px;font-size:12px;color:#193844}
+.poster-exp-card .poster-cond{font-size:10px;color:#55717d;line-height:1.4;margin-bottom:5px}
+.poster-exp-card .poster-reason{font-size:11px;color:#1d3039;line-height:1.45;margin:0}
+.poster-exp-card .poster-result{font-size:10px;color:#0f7080;margin-top:5px;font-weight:800}
+@media(max-width:760px){.poster-experiment-reasons{grid-template-columns:1fr}}
+
+
+/* v1.9.1 hypothesis UX */
+.hypothesis-note{margin-top:4px;font-size:10px;color:#7aa1b2}
+.hypothesis-error{margin:4px 0 0;font-size:11px}
+.hypothesis-box.error{border-color:#d97373;box-shadow:0 0 0 2px rgba(217,115,115,.12)}
+
+
+/* v2.0 separate hypothesis step + required-input modal */
+.hypothesis-step-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:16px;max-width:1250px;margin:25px auto}
+.hypothesis-step-card,.hypothesis-example-card{padding:25px}
+.hypothesis-step-card h2,.hypothesis-example-card h2{margin:7px 0 8px;font-size:24px}
+.hypothesis-guide{color:#9bb4c2;font-size:13px;line-height:1.6;margin:0 0 16px}
+.hypothesis-box.standalone{padding:14px;margin:0 0 14px}
+.hypothesis-box.standalone textarea{height:130px;min-height:130px;font-size:14px;line-height:1.6;padding:13px}
+.hypothesis-next-btn{margin-top:8px;min-height:50px}
+.hypothesis-checks{display:grid;gap:10px;margin-top:20px}
+.hypothesis-checks>div{display:grid;grid-template-columns:80px 1fr;gap:10px;align-items:center;padding:12px;border:1px solid #23485e;border-radius:10px;background:#081a29}
+.hypothesis-checks b{color:#73e9de}.hypothesis-checks span{font-size:13px;color:#b6cbd6}
+.warning-modal{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:rgba(0,8,14,.78);padding:20px}
+.warning-dialog{width:min(440px,92vw);border-radius:18px;padding:24px;text-align:center;border-color:#6b4c31}
+.warning-icon{width:48px;height:48px;margin:0 auto 12px;border-radius:50%;display:grid;place-items:center;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.55);color:#ffd66d;font-size:28px;font-weight:900}
+.warning-dialog h2{margin:5px 0 8px}.warning-dialog p{margin:0 0 18px;color:#cbdbe3;line-height:1.6;font-size:14px;white-space:pre-line}
+@media(max-width:760px){.hypothesis-step-grid{grid-template-columns:1fr}}
+
+
+/* v2.1 clearer relative metrics + accordion experiment log */
+.relative-index-note{
+  margin:8px 0 0;color:#6f93a5;font-size:9.5px;line-height:1.4
+}
+.log-panel-head{align-items:center}
+.log-head-actions{display:flex;align-items:center;gap:5px}
+.tiny-log-btn{
+  border:1px solid #284b61;background:#071825;color:#9eb8c6;
+  border-radius:7px;padding:4px 6px;font-size:9px;font-weight:700
+}
+.tiny-log-btn:hover{border-color:#2bbfb8;color:#dff9f6}
+.log-card{
+  padding:0!important;overflow:hidden;transition:border-color .15s,background .15s
+}
+.log-summary{
+  width:100%;display:flex;align-items:center;justify-content:space-between;
+  gap:8px;padding:10px 11px;border:0;background:transparent;color:#dcecf3;
+  text-align:left;font-weight:900;font-size:12px
+}
+.log-summary:hover{background:#0c2131}
+.log-summary-left{display:flex;align-items:center;gap:7px}
+.log-chevron{font-size:14px;color:#6ea2b8;transition:transform .18s}
+.log-card.open .log-chevron{transform:rotate(180deg)}
+.log-details{
+  display:none;border-top:1px solid #1b3d54;padding:9px 10px 10px;background:#071622
+}
+.log-card.open .log-details{display:block}
+.log-details p{margin:3px 0!important}
+.metric-wording{
+  margin-top:7px;padding:5px 7px;border-radius:6px;background:#091e2d;
+  color:#7ea4b6;font-size:9.5px;line-height:1.4
+}
+
+
+/* v2.2 landscape one-page poster + ThinkerBell */
+.thinkerbell-btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:8px 12px;border:1px solid #2bb7b0;border-radius:10px;
+  background:linear-gradient(135deg,#0a4d50,#0b3445);color:#dffcf8;
+  font-size:12px;font-weight:900;white-space:nowrap;
+}
+.thinkerbell-btn:hover{filter:brightness(1.12)}
+.thinkerbell-btn.disabled{
+  opacity:.45;pointer-events:none;border-color:#355164;background:#0b1925;color:#809aaa
+}
+
+/* 연구결과 이미지는 16:9 가로형 한 장으로 */
+.research-poster{
+  width:100%;
+  aspect-ratio:16 / 9;
+  min-height:0!important;
+  padding:18px 20px!important;
+  overflow:hidden;
+}
+.poster-top{padding-bottom:8px!important}
+.poster-top h2{font-size:24px!important;margin:3px 0!important}
+.poster-id{font-size:12px}
+.poster-grid{
+  grid-template-columns:.82fr 1.45fr .82fr!important;
+  gap:10px!important;
+  margin-top:10px!important;
+  height:calc(100% - 68px);
+}
+.poster-col{min-height:0}
+.poster-col article{
+  padding:8px 9px!important;
+  margin-bottom:6px!important;
+  border-radius:8px!important
+}
+.poster-col article span{font-size:9px!important}
+.poster-col article p{
+  margin:4px 0 0!important;
+  font-size:10.5px!important;
+  line-height:1.35!important;
+}
+.poster-chart{
+  min-width:0;display:flex;flex-direction:column;height:100%;
+}
+.poster-chart canvas{
+  width:100%!important;height:auto!important;max-height:46%;
+  flex:0 0 auto;
+}
+.poster-trials{
+  margin-top:6px!important;
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  gap:3px!important;
+  font-size:8.8px!important;
+  line-height:1.25!important;
+  color:#334f5c!important;
+  overflow:hidden;
+}
+.poster-trial-row{
+  display:grid;
+  grid-template-columns:auto 1.08fr 1.22fr .9fr;
+  gap:5px;align-items:start;
+  padding:4px 5px;
+  border:1px solid #d0dde2;
+  border-left:4px solid var(--trial-color,#38bdf8);
+  border-radius:6px;background:#fff;
+}
+.poster-trial-no{font-weight:900;color:#183946;white-space:nowrap}
+.poster-trial-cond,.poster-trial-reason,.poster-trial-result{min-width:0}
+.poster-trial-reason b,.poster-trial-result b{color:#0a7080}
+.poster-trial-result{font-weight:700;color:#0e6070}
+@media(max-width:900px){
+  .research-poster{aspect-ratio:auto;overflow:visible}
+  .poster-grid{height:auto}
+  .poster-trial-row{grid-template-columns:1fr}
+}
+
+
+/* v2.3 stronger required-field feedback */
+.hypothesis-box.required-error{
+  border-color:#fb7185!important;
+  box-shadow:0 0 0 3px rgba(251,113,133,.15)!important;
+  animation:requiredShake .28s ease-in-out 1;
+}
+.hypothesis-box.required-error textarea{
+  border-color:#fb7185!important;
+  background:#1a1018!important;
+  box-shadow:0 0 0 2px rgba(251,113,133,.10)!important;
+}
+.required-inline-error{
+  margin-top:7px;
+  padding:7px 9px;
+  border-radius:8px;
+  background:rgba(251,113,133,.10);
+  border:1px solid rgba(251,113,133,.42);
+  color:#ffb3bf;
+  font-size:11px;
+  font-weight:800;
+}
+@keyframes requiredShake{
+  0%,100%{transform:translateX(0)}
+  25%{transform:translateX(-5px)}
+  75%{transform:translateX(5px)}
+}
+
+
+/* v2.4 required reason feedback */
+.reason-input-wrap{min-width:0}
+.reason-input-wrap.required-error textarea{
+  border-color:#fb7185!important;
+  background:#1a1018!important;
+  box-shadow:0 0 0 3px rgba(251,113,133,.14)!important;
+  animation:reasonShake .28s ease-in-out 1;
+}
+.reason-input-wrap .required-inline-error{
+  margin-top:5px;
+  padding:6px 8px;
+  border-radius:7px;
+  background:rgba(251,113,133,.10);
+  border:1px solid rgba(251,113,133,.42);
+  color:#ffb3bf;
+  font-size:10.5px;
+  font-weight:800;
+}
+@keyframes reasonShake{
+  0%,100%{transform:translateX(0)}
+  25%{transform:translateX(-5px)}
+  75%{transform:translateX(5px)}
+}
+
+
+/* v2.5 evidence selection (1~5 experiments) */
+.evidence-select-guide{
+  margin:0 0 9px;padding:8px 10px;border:1px solid #28516a;border-radius:9px;
+  background:#081b2a;color:#9eb7c4;font-size:11px;line-height:1.45
+}
+.evidence-select-guide b{color:#78eee3}
+.selectable-evidence{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  max-height:285px;overflow:auto;padding-right:3px
+}
+.evidence-card.selectable{
+  position:relative;cursor:pointer;padding:10px 34px 10px 10px!important;
+  border:1px solid #25465d;border-left:5px solid var(--card-color);
+  background:#081827;transition:.15s
+}
+.evidence-card.selectable:hover{border-color:#3a728d;background:#0a1d2c}
+.evidence-card.selectable.selected{
+  border-color:#2ad4c5;
+  box-shadow:0 0 0 2px rgba(42,212,197,.12);
+  background:#0a242f
+}
+.evidence-select-mark{
+  position:absolute;right:9px;top:9px;width:21px;height:21px;border-radius:6px;
+  display:grid;place-items:center;border:1px solid #46677a;background:#071521;
+  color:transparent;font-size:13px;font-weight:900
+}
+.evidence-card.selected .evidence-select-mark{
+  background:#14a99e;border-color:#54f1e4;color:white
+}
+.evidence-card .evidence-title{font-weight:900;color:#e0edf3}
+.evidence-card .evidence-condition{margin-top:3px;color:#94adba;font-size:10.5px;line-height:1.35}
+.evidence-card .evidence-result{margin-top:5px;color:#73dcd6;font-size:10.5px;font-weight:800}
+.evidence-card .evidence-reason{margin-top:4px;color:#b2c6d0;font-size:10px;line-height:1.35}
+.evidence-limit-flash{animation:evidenceFlash .32s ease-in-out}
+@keyframes evidenceFlash{0%,100%{transform:scale(1)}50%{transform:scale(1.015)}}
+@media(max-width:760px){.selectable-evidence{grid-template-columns:1fr!important}}
+
+
+/* v3.0 literature-calibrated model + hypothesis conditions + tight capture */
+.available-condition-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:12px 0
+}
+.available-condition-grid>div{
+  padding:9px 10px;border:1px solid #23475d;border-radius:9px;background:#081a28
+}
+.available-condition-grid b{display:block;color:#6ee9dd;font-size:10px;margin-bottom:3px}
+.available-condition-grid span{display:block;color:#c0d2dc;font-size:11px;line-height:1.35}
+.hypothesis-question-box{
+  margin:11px 0;padding:11px 12px;border:1px solid #2e6972;border-radius:10px;
+  background:linear-gradient(135deg,#0a2a34,#0a1e2d)
+}
+.hypothesis-question-box span{display:block;color:#6ee9dd;font-size:9px;font-weight:900;letter-spacing:.08em;margin-bottom:4px}
+.hypothesis-question-box strong{font-size:13px;line-height:1.45}
+.hypothesis-frame{
+  padding:10px 11px;border:1px solid #465134;border-radius:10px;background:#171b10
+}
+.hypothesis-frame b{display:block;color:#dce98c;font-size:10px;margin-bottom:4px}
+.hypothesis-frame p{margin:0;color:#d8e0c0;font-size:11px;line-height:1.55}
+.compact-checks{gap:6px!important;margin-top:10px!important}
+.compact-checks>div{padding:8px!important}
+.realism-note{
+  margin:-2px 0 8px;padding:6px 8px;border-radius:8px;
+  background:#071a27;border:1px solid #1d4058;color:#739caf;
+  font-size:9.4px;line-height:1.4
+}
+
+/* 결과 포스터: 고정 16:9 높이를 제거하여 실제 내용만 저장 */
+.research-poster{
+  aspect-ratio:auto!important;
+  width:min(1380px,100%)!important;
+  min-height:0!important;
+  height:auto!important;
+  overflow:visible!important;
+  margin:0 auto!important;
+}
+.poster-grid{
+  height:auto!important;
+  align-items:start!important;
+}
+.poster-chart{
+  height:auto!important;
+}
+.poster-chart canvas{
+  max-height:none!important;
+}
+.capture-clone{
+  position:fixed!important;
+  left:-100000px!important;
+  top:0!important;
+  width:1380px!important;
+  max-width:none!important;
+  aspect-ratio:auto!important;
+  min-height:0!important;
+  height:auto!important;
+  overflow:visible!important;
+  z-index:-9999!important;
+}
+.capture-clone .poster-grid{
+  height:auto!important;
+  align-items:start!important;
+}
+.capture-clone .poster-chart{
+  height:auto!important;
+}
+.capture-clone .poster-chart canvas{
+  width:100%!important;
+  height:auto!important;
+  max-height:none!important;
+}
+@media(max-width:760px){
+  .available-condition-grid{grid-template-columns:1fr}
+}
+
+
+/* v3.1 hypothesis examples + max-5 notice + challenge required feedback */
+.hypothesis-examples{
+  margin-top:9px;padding:10px 11px;border:1px solid #31516a;border-radius:10px;background:#081925
+}
+.hypothesis-examples>b{display:block;color:#73e9de;font-size:10px;margin-bottom:5px}
+.hypothesis-examples p{margin:4px 0;color:#c3d4dd;font-size:10.5px;line-height:1.4}
+.hypothesis-examples small{display:block;margin-top:6px;color:#789cab;font-size:9.5px;line-height:1.45}
+
+.five-result-notice{
+  margin-top:7px;display:inline-block;padding:6px 9px;border-radius:8px;
+  border:1px solid #2b586f;background:#081d2b;color:#91adbb;
+  font-size:10px;line-height:1.45
+}
+.five-result-notice>b{color:#70e4d9}
+
+.challenge-reason-wrap{min-width:0}
+.challenge-reason-wrap>label{margin-bottom:6px}
+.challenge-reason-wrap.required-error textarea{
+  border-color:#fb7185!important;
+  background:#1a1018!important;
+  box-shadow:0 0 0 3px rgba(251,113,133,.15)!important;
+  animation:challengeReasonShake .28s ease-in-out 1;
+}
+.challenge-reason-wrap .required-inline-error{
+  margin-top:6px;padding:7px 9px;border-radius:8px;
+  background:rgba(251,113,133,.10);
+  border:1px solid rgba(251,113,133,.42);
+  color:#ffb3bf;font-size:10.5px;font-weight:800;line-height:1.35
+}
+@keyframes challengeReasonShake{
+  0%,100%{transform:translateX(0)}
+  25%{transform:translateX(-5px)}
+  75%{transform:translateX(5px)}
+}
+
+
+/* v3.2 one-shot final challenge + teacher live arena */
+.challenge-once-notice{
+  margin:0 0 12px;padding:10px 11px;border:1px solid rgba(251,191,36,.48);
+  border-radius:10px;background:rgba(251,191,36,.08)
+}
+.challenge-once-notice b{display:block;color:#ffd978;font-size:12px;margin-bottom:4px}
+.challenge-once-notice span{display:block;color:#d6cba8;font-size:10.5px;line-height:1.5}
+.challenge-controls.locked{
+  opacity:.78;
+}
+.challenge-controls.locked select,
+.challenge-controls.locked input,
+.challenge-controls.locked textarea{
+  cursor:not-allowed;
+  filter:saturate(.55);
+}
+.challenge-run-complete{
+  background:#15313d!important;
+  border-color:#426071!important;
+  color:#9fb7c2!important;
+  cursor:not-allowed!important;
+}
+
+.teacher-challenge-arena{
+  border-radius:16px;padding:15px 16px;margin:0 0 12px
+}
+.arena-head{
+  display:flex;justify-content:space-between;gap:15px;align-items:flex-start;margin-bottom:11px
+}
+.arena-head h2{margin:3px 0 4px;font-size:18px}
+.arena-head p{margin:0;color:var(--muted);font-size:11px;line-height:1.45}
+.arena-class-label{
+  padding:7px 10px;border:1px solid #2b5369;border-radius:999px;
+  color:#93dcd8;background:#091c29;font-size:11px;font-weight:800;white-space:nowrap
+}
+.challenge-arena-grid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px
+}
+.arena-card{
+  border:1px solid #264b62;border-radius:12px;background:#081827;padding:10px;min-width:0
+}
+.arena-card.running{
+  border-color:#27cfc1;box-shadow:0 0 0 2px rgba(39,207,193,.08)
+}
+.arena-card.done{
+  border-color:#587184;background:#091722
+}
+.arena-card.waiting{
+  opacity:.72
+}
+.arena-card-head{
+  display:flex;justify-content:space-between;gap:8px;align-items:flex-start;margin-bottom:6px
+}
+.arena-card-head h3{margin:0;font-size:13px}
+.arena-status{
+  padding:3px 6px;border-radius:999px;font-size:9px;font-weight:900;
+  background:#0c3641;color:#8ff6eb;white-space:nowrap
+}
+.arena-card.done .arena-status{background:#263643;color:#c1d0d8}
+.arena-card.waiting .arena-status{background:#2d2918;color:#e4ce83}
+.arena-members{color:#7fa1b2;font-size:9px;margin-bottom:7px}
+.arena-cond{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:7px
+}
+.arena-cond span{
+  background:#0c2232;border-radius:6px;padding:4px 5px;font-size:9px;color:#c2d6df;text-align:center
+}
+.arena-values{
+  display:flex;justify-content:space-between;gap:8px;align-items:baseline;margin-bottom:5px
+}
+.arena-values b{font-size:18px;color:#e6fbff}
+.arena-values span{font-size:10px;color:#7fa6b8}
+.arena-reason{
+  min-height:28px;margin:5px 0 7px;color:#9fb7c3;font-size:9.5px;line-height:1.4;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden
+}
+.arena-canvas{
+  width:100%;height:92px;background:#06141f;border-radius:8px;border:1px solid #17384d
+}
+@media(max-width:1150px){.challenge-arena-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.challenge-arena-grid{grid-template-columns:1fr}.arena-head{flex-direction:column}}
+
+
+/* v3.2.1 required feedback on lab entry */
+.join-field-wrap.required-error input{
+  border-color:#fb7185!important;
+  background:#1a1018!important;
+  box-shadow:0 0 0 3px rgba(251,113,133,.14)!important;
+}
+.join-field-wrap.required-error .class-picker{
+  padding:5px;
+  margin:-5px;
+  border:1px solid rgba(251,113,133,.70);
+  border-radius:12px;
+  background:rgba(251,113,133,.07);
+  box-shadow:0 0 0 3px rgba(251,113,133,.10);
+}
+.join-field-wrap.required-error .class-picker button{
+  border-color:#7a4454;
+}
+.join-field-wrap .required-inline-error{
+  margin-top:6px;
+  padding:6px 8px;
+  border-radius:7px;
+  background:rgba(251,113,133,.10);
+  border:1px solid rgba(251,113,133,.42);
+  color:#ffb3bf;
+  font-size:10.5px;
+  font-weight:800;
+  line-height:1.35;
+}
+
+
+/* v3.2.2 lock experimental variables during a run */
+.experiment-settings-zone{
+  position:relative;
+  border-radius:12px;
+}
+.experiment-running-overlay{
+  position:absolute;
+  inset:-5px;
+  z-index:40;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:13px;
+  background:rgba(4,13,21,.82);
+  backdrop-filter:blur(2.5px);
+  -webkit-backdrop-filter:blur(2.5px);
+}
+.experiment-running-overlay.hidden{display:none!important}
+.experiment-running-card{
+  min-width:230px;
+  max-width:82%;
+  padding:18px 20px;
+  border:1px solid #2c7483;
+  border-radius:14px;
+  background:rgba(6,25,37,.96);
+  box-shadow:0 12px 36px rgba(0,0,0,.35);
+  text-align:center;
+}
+.experiment-running-card strong{
+  display:block;
+  color:#dffcff;
+  font-size:17px;
+  margin-top:8px;
+}
+.experiment-running-card span{
+  display:block;
+  margin-top:6px;
+  color:#9fc3cf;
+  font-size:11px;
+}
+.experiment-running-card small{
+  display:block;
+  margin-top:5px;
+  color:#6f93a3;
+  font-size:9.5px;
+}
+.running-spinner{
+  width:30px;height:30px;
+  margin:0 auto;
+  border:3px solid rgba(90,225,215,.18);
+  border-top-color:#54e7da;
+  border-radius:50%;
+  animation:runningSpin .8s linear infinite;
+}
+@keyframes runningSpin{to{transform:rotate(360deg)}}
+.experiment-settings-zone.is-running .controls-grid,
+.experiment-settings-zone.is-running .reason-row,
+.experiment-settings-zone.is-running #multiVarWarning,
+.experiment-settings-zone.is-running #labMessage{
+  filter:saturate(.45) brightness(.72);
+}
+
+
+/* v3.3 clean header + teacher password modal + robust text wrapping */
+.single-top{justify-content:flex-start!important}
+.single-top .brand{cursor:default!important}
+.top-actions{display:none!important}
+
+.teacher-password-modal{z-index:1000}
+.teacher-password-card{
+  position:relative;
+  width:min(430px,92vw);
+  padding:25px;
+  border-radius:18px;
+}
+.teacher-password-card h2{margin:5px 0 7px;font-size:22px}
+.teacher-password-card>p{margin:0 0 8px;color:#91adba;font-size:12px}
+.teacher-password-card input{width:100%;margin:12px 0 9px}
+.teacher-password-hint{
+  padding:8px 10px;
+  border:1px solid #29495d;
+  border-radius:8px;
+  background:#081925;
+  color:#718f9f;
+  font-size:10px;
+}
+.teacher-password-modal.hidden{display:none!important}
+
+/* 긴 학생 응답은 결과 화면/PNG에서 반드시 박스 안에서 줄바꿈 */
+.research-poster,
+.research-poster *,
+.capture-clone,
+.capture-clone *{
+  box-sizing:border-box;
+}
+.poster-grid,
+.poster-col,
+.poster-col article,
+.poster-chart,
+.poster-trial-row,
+.poster-trial-cond,
+.poster-trial-reason,
+.poster-trial-result{
+  min-width:0!important;
+}
+.poster-col article p,
+#posterHypothesis,
+#posterKey,
+#posterUnexpected,
+#posterChanged,
+#posterExplanation,
+.poster-trial-cond,
+.poster-trial-reason,
+.poster-trial-result,
+.capture-clone .poster-col article p,
+.capture-clone .poster-trial-cond,
+.capture-clone .poster-trial-reason,
+.capture-clone .poster-trial-result{
+  white-space:pre-wrap!important;
+  overflow-wrap:anywhere!important;
+  word-break:break-word!important;
+  max-width:100%!important;
+}
+.poster-col article{
+  overflow:hidden!important;
+}
+.poster-trial-row{
+  overflow:hidden!important;
+}
+
+/* 작성 화면에서도 긴 문장이 자연스럽게 보이도록 */
+.reflection-grid textarea,
+.reason-row textarea,
+.challenge-reason-wrap textarea,
+.hypothesis-box textarea{
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+
+</style>
+</head>
+<body class="single-file">
+
+<header class="single-top">
+  <div class="brand"><span class="brand-mark">Y</span><b>YEAST LAB</b></div>
+</header>
+
+
+<section id="landingView" class="view active">
+  <main class="landing-shell">
+    <section class="hero-panel glass">
+      <div class="eyebrow">CELL METABOLISM · VIRTUAL LAB</div>
+      <h1>YEAST LAB</h1>
+      <p class="hero-copy">효모가 유기물에서 에너지를 얻는 과정을 데이터로 탐구하는 가상 실험실</p>
+      <div class="hero-flow">
+        <span>빛에너지</span><i>→</i><span>광합성</span><i>→</i><span>유기물</span><i>→</i><span>효모</span><i>→</i><span>ATP</span>
+      </div>
+      <div class="role-grid">
+        <button id="openStudentBtn" class="role-card" type="button">
+          <div class="role-icon">S</div>
+          <div><strong>학생용 실험실</strong><span>조건 설계 · 30초 가상실험 · 연구기록 · 챌린지</span></div>
+        </button>
+        <button id="openTeacherBtn" class="role-card" type="button">
+          <div class="role-icon">T</div>
+          <div><strong>교사용 대시보드</strong><span>B/C/D반 실시간 진행 확인 · 모둠 상세 기록</span></div>
+        </button>
+      </div>
+      <p class="model-note">본 시뮬레이션은 학습을 위한 교육용 모델이며 실제 실험 결과와 차이가 있을 수 있습니다.</p>
+    </section>
+  </main>
+</section>
+
+<div id="teacherPasswordModal" class="modal hidden teacher-password-modal" aria-hidden="true">
+  <div class="teacher-password-card glass" role="dialog" aria-modal="true" aria-labelledby="teacherPasswordTitle">
+    <button id="teacherPasswordCancel" class="modal-close" type="button" aria-label="닫기">×</button>
+    <span class="step-kicker">TEACHER ACCESS</span>
+    <h2 id="teacherPasswordTitle">교사용 대시보드</h2>
+    <p>비밀번호를 입력하세요.</p>
+    <div class="teacher-password-hint">힌트: 대문자+소문자+특수기호의 비밀번호를 입력하세요!</div>
+    <input id="teacherPassword" type="password" autocomplete="current-password" placeholder="비밀번호" />
+    <button id="teacherLoginBtn" class="primary-btn full" type="button">접속</button>
+    <p id="teacherLoginMessage" class="form-error" aria-live="polite"></p>
+  </div>
+</div>
+
+
+<div id="studentContainer" class="hidden">
+  <div class="student-statusbar">
+    <button id="thinkerBellBtn" class="thinkerbell-btn disabled" type="button" aria-disabled="true">띵커벨 보드 ↗</button>
+    <span id="studentIdentity" class="pill muted">미입장</span>
+    <button id="resetBtn" class="ghost-btn" type="button">진행 초기화</button>
+  </div>
+  <main id="studentApp" class="app-shell">
+  <section id="joinView" class="view active">
+    <div class="view-head">
+      <div>
+        <span class="step-kicker">ENTRY</span>
+        <h1>가상 실험실 입장</h1>
+        <p>B·C·D반 중 하나를 선택하고 모둠 정보를 입력하세요.</p>
+      </div>
+      <a class="back-btn" href="#">← 처음으로</a>
+    </div>
+    <div class="join-grid">
+      <div class="glass panel">
+        <div id="classFieldWrap" class="join-field-wrap">
+          <label>반 선택</label>
+          <div class="class-picker" id="classPicker">
+            <button type="button" data-class="B">B반</button>
+            <button type="button" data-class="C">C반</button>
+            <button type="button" data-class="D">D반</button>
+          </div>
+          <div id="classInlineError" class="required-inline-error hidden">B·C·D반 중 자신의 반을 선택하세요.</div>
+        </div>
+
+        <div id="groupFieldWrap" class="join-field-wrap">
+          <label for="groupName">모둠명</label>
+          <input id="groupName" maxlength="30" placeholder="예: 미토콘드리아 연구팀" />
+          <div id="groupInlineError" class="required-inline-error hidden">모둠명을 입력하세요.</div>
+        </div>
+
+        <div id="membersFieldWrap" class="join-field-wrap">
+          <label for="memberNames">학생 이름</label>
+          <input id="memberNames" maxlength="80" placeholder="예: 박은행, 김효모, 이ATP" />
+          <div id="membersInlineError" class="required-inline-error hidden">참여 학생 이름을 입력하세요.</div>
+        </div>
+
+        <button id="joinBtn" class="primary-btn full" type="button">실험실 입장</button>
+        <p id="joinError" class="form-error" aria-live="polite"></p>
+      </div>
+      <div class="glass panel briefing">
+        <span class="step-kicker">MISSION</span>
+        <h2>효모는 어떤 조건에서 유기물을 이용해 에너지를 얻을까?</h2>
+        <ol>
+          <li>조건을 자유롭게 설계합니다.</li>
+          <li>선택 이유를 기록한 뒤 30분 가상실험을 진행합니다.</li>
+          <li>실험 결과를 비교해 생각을 수정합니다.</li>
+          <li>마지막에는 무산소 조건의 CO₂ 챌린지에 도전합니다.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section id="hypothesisView" class="view">
+    <div class="view-head">
+      <div>
+        <span class="step-kicker">STEP 0 · HYPOTHESIS</span>
+        <h1>실험 전에 가설을 세워보세요</h1>
+        <p>결과를 보기 전에 우리 모둠의 생각을 먼저 기록합니다.</p>
+      </div>
+      <button class="back-btn" data-go="joinView" type="button">← 입장 정보</button>
+    </div>
+
+    <div class="hypothesis-step-grid">
+      <section class="glass panel hypothesis-step-card">
+        <span class="step-kicker">OUR HYPOTHESIS</span>
+        <h2>어떤 조건이 효모의 CO₂ 발생에 영향을 줄까요?</h2>
+        <p class="hypothesis-guide">오른쪽에 제시된 실험 가능 조건을 확인한 뒤, 비교할 변인과 예상 결과, 이유가 드러나게 작성하세요.</p>
+
+        <div id="hypothesisBox" class="hypothesis-box standalone">
+          <div class="hypothesis-head">
+            <label for="hypothesisInput">우리 모둠의 초기 가설</label>
+            <span id="hypothesisStatus">첫 실험 전까지 수정 가능</span>
+          </div>
+          <textarea id="hypothesisInput" maxlength="260" placeholder="예: 당 농도를 5%에서 10%로 높이면 30분 동안의 CO₂ 발생량이 증가할 것이다. 왜냐하면 효모가 이용할 수 있는 기질이 더 충분해지기 때문이다."></textarea>
+          <div class="hypothesis-note">※ 위 문장은 예시입니다. 우리 모둠의 가설을 직접 입력하세요.</div>
+          <div id="hypothesisInlineError" class="required-inline-error hidden">초기 가설을 입력해야 다음 단계로 이동할 수 있습니다.</div>
+        </div>
+
+        <button id="saveHypothesisBtn" class="primary-btn full hypothesis-next-btn" type="button">가설 저장하고 실험 시작 →</button>
+      </section>
+
+      <section class="glass panel hypothesis-example-card">
+        <span class="step-kicker">AVAILABLE CONDITIONS</span>
+        <h2>가상 실험에서 사용할 수 있는 조건</h2>
+        <div class="available-condition-grid">
+          <div><b>유기물</b><span>포도당 · 설탕 · 과당 · 전분 · 없음</span></div>
+          <div><b>산소</b><span>공급 / 공급 없음</span></div>
+          <div><b>당 농도</b><span>0~25% (w/v)</span></div>
+          <div><b>온도</b><span>10~50℃</span></div>
+          <div><b>건조효모</b><span>0~2.0 g</span></div>
+          <div><b>고정 조건</b><span>반응액 20 mL · 관찰 30분</span></div>
+        </div>
+
+        <div class="hypothesis-question-box">
+          <span>탐구 질문</span>
+          <strong>어떤 조건이 효모의 CO₂ 발생과 에너지 획득에 영향을 줄까?</strong>
+        </div>
+
+        <div class="hypothesis-frame">
+          <b>가설 문장 틀</b>
+          <p>만약 <u>어떤 조건</u>을 바꾸면, 30분 동안의 <u>CO₂ 발생량</u>은 <u>증가 / 감소 / 가장 많음 / 가장 적음</u>할 것이다. 왜냐하면 ________이기 때문이다.</p>
+        </div>
+
+        <div class="hypothesis-examples">
+          <b>가설 예시</b>
+          <p>• 당 농도를 5%에서 10%로 높이면 30분 동안의 CO₂ 발생량이 증가할 것이다.</p>
+          <p>• 당 농도가 너무 높아지면 중간 농도일 때보다 CO₂ 발생량이 감소할 것이다.</p>
+          <p>• 효모량이 많아지면 같은 시간 동안 발생하는 CO₂의 양이 증가할 것이다.</p>
+          <small>※ “발효가 잘될 것이다”라고만 쓰기보다, CO₂ 발생량처럼 관찰할 수 있는 결과를 구체적으로 쓰는 것이 좋습니다.</small>
+        </div>
+
+        <div class="hypothesis-checks compact-checks">
+          <div><b>① 조건</b><span>무엇을 바꾸거나 비교할 것인가?</span></div>
+          <div><b>② 예상</b><span>어떤 결과가 나타날 것인가?</span></div>
+          <div><b>③ 이유</b><span>왜 그렇게 예상하는가?</span></div>
+        </div>
+        <p class="model-note">위에 제시된 조건 범위 안에서 가설을 세우세요. 첫 실험이 시작되면 초기 가설은 잠깁니다.</p>
+      </section>
+    </div>
+  </section>
+
+  <section id="labView" class="view">
+    <div class="view-head compact">
+      <div class="head-left">
+        <button class="back-btn" data-go="hypothesisView" type="button">← 가설 확인</button>
+        <div>
+          <span class="step-kicker">STEP 1 · FREE INQUIRY</span>
+          <h1>효모 에너지 획득 가상실험</h1>
+          <p>한 번에 여러 조건을 바꿀 수 있지만, 결과 해석을 위해 바뀐 변인을 확인하세요.</p>
+          <div class="five-result-notice"><b>결과 정리 안내</b> 실험은 원하는 만큼 수행할 수 있지만, 생각 변화 정리와 최종 연구 결과에는 <b>최소 1개~최대 5개</b>의 실험만 선택하여 반영할 수 있습니다.</div>
+        </div>
+      </div>
+      <button id="goReflectionBtn" class="secondary-btn" type="button">생각 변화 정리 →</button>
+    </div>
+
+    <div class="lab-layout">
+      <section class="glass panel scene-panel">
+        <div class="panel-head"><b>실험 장면</b><span>LIVE SIMULATION</span></div>
+        <div class="realism-note">문헌 기반 가상 표준 조건 · 반응액 20 mL · 당 농도 % (w/v) · 건조효모 질량 · 30분 관찰</div>
+        <div class="scene-grid">
+          <div class="sensor-stack">
+            <div class="sensor"><span>SIM TIME</span><strong id="simTime">0 min</strong></div>
+            <div class="sensor"><span>CO₂</span><strong id="co2Live">0.0 mL</strong></div>
+            <div class="sensor"><span>O₂ 소비 추정량</span><strong id="o2Live">0.0 mL</strong></div>
+            <div class="sensor"><span>에탄올 추정 농도</span><strong id="ethanolLive">0.00%</strong></div>
+          </div>
+          <div class="vessel-wrap realistic-wrap">
+            <div class="apparatus-stage">
+              <div class="tube-shadow"></div>
+              <div class="stopper">
+                <span></span><span></span><span></span>
+              </div>
+              <div class="test-tube" id="testTube">
+                <div class="glass-highlight one"></div>
+                <div class="glass-highlight two"></div>
+                <div class="graduation-marks">
+                  <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                </div>
+                <div id="liquidLevel" class="liquid-real">
+                  <div class="liquid-surface"></div>
+                  <div id="yeastSuspension" class="yeast-suspension">
+                    <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                    <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                  </div>
+                </div>
+                <div id="bubbleLayer" class="bubble-layer-real"></div>
+                <div id="pelletCore" class="yeast-sediment">
+                  <span class="sediment-mass mass-a"></span>
+                  <span class="sediment-mass mass-b"></span>
+                  <span class="sediment-mass mass-c"></span>
+                  <span class="sediment-mass mass-d"></span>
+                  <b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b>
+                  <b></b><b></b><b></b><b></b>
+                </div>
+              </div>
+              <div class="tube-label">YEAST CULTURE</div>
+            </div>
+            <div class="vessel-caption"><span id="substrateCaption">포도당</span><span id="oxygenCaption">산소 공급 없음</span></div>
+          </div>
+        </div>
+        <div class="mini-meters">
+          <div><span>당 잔량 추정</span><div class="meter"><i id="substrateMeter"></i></div><b id="substrateLive">0.00 g</b></div>
+          <div><span>ATP 생성 환산량*</span><div class="meter"><i id="atpMeter"></i></div><b id="atpLive">0.0 mmol</b></div>
+        </div>
+        <p class="relative-index-note">※ CO₂·O₂·에탄올·당 잔량은 문헌의 S. cerevisiae 대사속도·수율 범위를 이용한 추정값입니다. *ATP는 대사경로의 이론적 ATP 수율을 적용한 누적 환산값이며, 세포 안에 저장된 ATP 농도가 아닙니다.</p>
+      </section>
+
+      <section class="glass panel graph-controls-panel">
+        <div class="panel-head"><b>실시간 데이터</b><span>1초 = 가상 1분</span></div>
+        <div class="graph-box">
+          <canvas id="mainGraph" width="760" height="330" aria-label="시간에 따른 누적 CO2 발생량 그래프"></canvas>
+        </div>
+
+        <div id="experimentSettingsZone" class="experiment-settings-zone">
+          <div class="controls-grid">
+            <label>유기물 종류
+              <select id="substrateSelect">
+                <option value="glucose">포도당</option>
+                <option value="sucrose">설탕</option>
+                <option value="fructose">과당</option>
+                <option value="starch">전분</option>
+                <option value="none">유기물 없음</option>
+              </select>
+            </label>
+            <label>산소 공급
+              <select id="oxygenSelect">
+                <option value="off">공급 없음</option>
+                <option value="on">공급</option>
+              </select>
+            </label>
+            <label>당 농도 <output id="sugarOut">5%</output>
+              <input id="sugarRange" type="range" min="0" max="25" step="1" value="5" />
+            </label>
+            <label>온도 <output id="tempOut">30℃</output>
+              <input id="tempRange" type="range" min="10" max="50" step="1" value="30" />
+            </label>
+            <label>효모량 <output id="yeastOut">1.0 g</output>
+              <input id="yeastRange" type="range" min="0" max="2" step="0.1" value="1" />
+            </label>
+            <div class="changed-box">
+              <span>이전 실험과 달라진 조건</span>
+              <strong id="changedConditions">첫 실험</strong>
+            </div>
+          </div>
+
+          <div id="multiVarWarning" class="warning hidden">여러 조건을 동시에 변경하면 어떤 변인이 결과에 영향을 주었는지 판단하기 어려울 수 있습니다.</div>
+
+          <div class="reason-row">
+            <label for="reasonInput">이번 조건을 선택한 이유 <span>직접 작성</span></label>
+            <div id="reasonInputWrap" class="reason-input-wrap">
+              <textarea id="reasonInput" maxlength="220" placeholder="예: 산소 공급이 없을 때도 CO₂가 발생하는지 확인하려고 이 조건을 선택했다."></textarea>
+              <div id="reasonInlineError" class="required-inline-error hidden">이번 조건을 선택한 이유를 입력해야 실험을 시작할 수 있습니다.</div>
+            </div>
+            <button id="runBtn" class="primary-btn" type="button">실험 시작</button>
+          </div>
+          <p id="labMessage" class="form-error" aria-live="polite"></p>
+
+          <div id="experimentRunningOverlay" class="experiment-running-overlay hidden" aria-live="polite">
+            <div class="experiment-running-card">
+              <div class="running-spinner" aria-hidden="true"></div>
+              <strong>실험 진행 중...</strong>
+              <span>현재 조건으로 데이터를 수집하고 있습니다.</span>
+              <small>실험이 끝나면 조건을 다시 변경할 수 있습니다.</small>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="glass panel log-panel">
+        <div class="panel-head log-panel-head">
+          <b>우리 모둠 연구 기록</b>
+          <div class="log-head-actions">
+            <button id="expandAllLogsBtn" class="tiny-log-btn" type="button">모두 펼치기</button>
+            <button id="collapseAllLogsBtn" class="tiny-log-btn" type="button">모두 접기</button>
+            <span id="trialCount">0회</span>
+          </div>
+        </div>
+        <div id="experimentLog" class="experiment-log">
+          <div class="empty-state">첫 실험을 수행하면 조건 · 선택 이유 · 결과가 여기에 기록됩니다.</div>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <section id="reflectionView" class="view">
+    <div class="view-head compact">
+      <div class="head-left">
+        <button class="back-btn" data-go="labView" type="button">← 실험으로</button>
+        <div>
+          <span class="step-kicker">STEP 2 · REFLECT</span>
+          <h1>우리의 생각은 어떻게 바뀌었나요?</h1>
+          <p>왼쪽의 실제 실험 데이터를 보면서 설명을 작성하세요.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="reflection-grid">
+      <section class="glass panel evidence-panel">
+        <div class="panel-head">
+          <b>결과 페이지에 반영할 실험 선택</b>
+          <span id="evidenceCount">0개 선택 / 최대 5개</span>
+        </div>
+        <div class="evidence-select-guide">
+          <b>최소 1개, 최대 5개</b>의 실험을 선택하세요. 선택한 실험의 그래프와 조건만 최종 연구 결과 이미지에 반영됩니다.
+        </div>
+        <canvas id="reflectionGraph" width="720" height="330"></canvas>
+        <div id="evidenceCards" class="evidence-cards selectable-evidence"></div>
+      </section>
+      <section class="glass panel writing-panel">
+        <div class="initial-hypothesis-review">
+          <span>실험 전에 세운 가설</span>
+          <p id="reflectionHypothesis">아직 가설이 기록되지 않았습니다.</p>
+          <small>첫 실험 시작 후에는 수정할 수 없습니다.</small>
+        </div>
+        <label for="keyResult">가장 중요한 실험 결과</label>
+        <textarea id="keyResult" placeholder="어떤 비교가 가장 중요했나요?"></textarea>
+        <label for="unexpected">예상과 달랐던 점</label>
+        <textarea id="unexpected" placeholder="예상과 달랐던 결과가 있다면 작성하세요."></textarea>
+        <label for="changedThinking">생각이 어떻게 바뀌었나요?</label>
+        <textarea id="changedThinking" placeholder="처음에는 (   )라고 생각했지만, 실험에서 (   )을 확인하여 지금은 (   )라고 생각한다."></textarea>
+        <label for="currentExplanation">현재 우리의 설명</label>
+        <textarea id="currentExplanation" placeholder="효모의 에너지 획득에 대해 지금은 어떻게 설명할 수 있나요?"></textarea>
+        <button id="makeReportBtn" class="primary-btn full" type="button">연구 결과 카드 만들기</button>
+        <p id="reflectionMessage" class="form-error" aria-live="polite"></p>
+      </section>
+    </div>
+  </section>
+
+  <section id="reportView" class="view">
+    <div class="view-head compact">
+      <div class="head-left">
+        <button class="back-btn" data-go="reflectionView" type="button">← 수정하기</button>
+        <div>
+          <span class="step-kicker">STEP 3 · REPORT</span>
+          <h1>우리 모둠의 연구 결과</h1>
+          <p>연구 포스터를 PNG로 저장하고 공유할 수 있습니다.</p>
+        </div>
+      </div>
+      <div class="head-actions">
+        <button id="captureReportBtn" class="secondary-btn" type="button">PNG 저장</button>
+        <button id="challengeGateBtn" class="primary-btn locked-btn" type="button" disabled>🔒 최종 게임 대기</button>
+      </div>
+    </div>
+    <section id="researchPoster" class="research-poster">
+      <div class="poster-top">
+        <div>
+          <span class="step-kicker">YEAST LAB RESEARCH POSTER</span>
+          <h2 id="posterTitle">연구 결과</h2>
+        </div>
+        <div id="posterIdentity" class="poster-id"></div>
+      </div>
+      <div class="poster-grid">
+        <div class="poster-col">
+          <article><span>탐구 질문</span><p>효모는 서로 다른 유기물과 산소 조건에서 어떻게 에너지를 얻을까?</p></article>
+          <article><span>초기 가설</span><p id="posterHypothesis"></p></article>
+          <article><span>가장 중요한 결과</span><p id="posterKey"></p></article>
+          <article><span>예상 밖 결과</span><p id="posterUnexpected"></p></article>
+        </div>
+        <div class="poster-chart">
+          <canvas id="posterGraph" width="760" height="315"></canvas>
+          <div id="posterTrials" class="poster-trials"></div>
+        </div>
+        <div class="poster-col">
+          <article><span>생각의 변화</span><p id="posterChanged"></p></article>
+          <article class="accent"><span>현재 우리의 설명</span><p id="posterExplanation"></p></article>
+          <article><span>모델 안내</span><p>문헌에 보고된 효모의 대사속도·수율을 기준으로 보정한 교육용 추정값입니다. 균주, pH, 교반, 실제 산소전달 등에 따라 실험값은 달라질 수 있습니다.</p></article>
+        </div>
+      </div>
+    </section>
+  </section>
+
+<section id="challengeView" class="view">
+    <div class="view-head compact">
+      <div class="head-left">
+        <button class="back-btn" data-go="reportView" type="button">← 연구 결과</button>
+        <div>
+          <span class="step-kicker">BONUS · APPLICATION</span>
+          <h1>FERMENTATION CHALLENGE</h1>
+          <p>산소 공급이 없는 조건에서 30분 동안 CO₂를 가장 많이 발생시키는 조건을 설계하세요.</p>
+        </div>
+      </div>
+    </div>
+    <div class="challenge-layout">
+      <section class="glass panel">
+        <div class="challenge-rules">
+          <span>고정</span><b>산소 공급 없음 · 효모량 1.0 g · 반응액 20 mL · 실험 30분</b>
+        </div>
+        <div class="challenge-once-notice">
+          <b>⚠ FINAL CHALLENGE는 모둠당 단 1회만 가능합니다.</b>
+          <span>FINAL START를 누르는 순간 조건이 확정되며, 실험이 끝난 뒤 다시 도전할 수 없습니다. 앞선 탐구 결과를 근거로 신중하게 선택하세요.</span>
+        </div>
+        <div class="challenge-controls">
+          <label>당 종류
+            <select id="challengeSubstrate">
+              <option value="glucose">포도당</option>
+              <option value="sucrose">설탕</option>
+              <option value="fructose">과당</option>
+              <option value="starch">전분</option>
+            </select>
+          </label>
+          <label>당 농도 <output id="challengeSugarOut">8%</output>
+            <input id="challengeSugar" type="range" min="1" max="25" value="8" />
+          </label>
+          <label>온도 <output id="challengeTempOut">30℃</output>
+            <input id="challengeTemp" type="range" min="10" max="50" value="30" />
+          </label>
+          <div id="challengeReasonWrap" class="challenge-reason-wrap">
+            <label for="challengeReason">최종 조건 선택 근거</label>
+            <textarea id="challengeReason" maxlength="220" placeholder="앞선 탐구에서 얻은 데이터를 근거로 작성하세요."></textarea>
+            <div id="challengeReasonError" class="required-inline-error hidden">최종 조건을 선택한 근거를 입력해야 FINAL START를 실행할 수 있습니다.</div>
+          </div>
+          <button id="challengeRunBtn" class="primary-btn full" type="button">FINAL START</button>
+        </div>
+      </section>
+      <section class="glass panel challenge-live">
+        <div class="challenge-value"><span>SIM TIME</span><strong id="challengeTime">0 min</strong></div>
+        <div class="challenge-value"><span>CO₂</span><strong id="challengeCO2">0.0 mL</strong></div>
+        <canvas id="challengeGraph" width="720" height="330"></canvas>
+        <div id="challengeResult" class="challenge-result">최종 조건을 설계해 도전하세요.</div>
+      </section>
+    </div>
+  </section>
+</main>
+</div>
+
+<div id="teacherContainer" class="hidden">
+  <main class="app-shell">
+  <section id="teacherDashboard" class="view">
+    <div class="view-head compact">
+      <div>
+        <span class="step-kicker">LIVE CLASSROOM MONITOR</span>
+        <h1>학급 실시간 모니터링</h1>
+        <p>학생용 페이지의 실험 단계 · 현재 조건 · 작성 중인 이유 · 결과를 확인합니다.</p>
+      </div>
+      <button id="teacherLogoutBtn" class="ghost-btn" type="button">로그아웃</button>
+    </div>
+
+    <div class="class-tabs" id="classTabs">
+      <button data-filter="ALL" class="active">전체</button>
+      <button data-filter="B">B반</button>
+      <button data-filter="C">C반</button>
+      <button data-filter="D">D반</button>
+    </div>
+
+    <section class="teacher-control-panel glass">
+      <div class="teacher-control-head">
+        <div>
+          <span class="step-kicker">FINAL GAME CONTROL</span>
+          <h2>최종 게임 챌린지 활성화</h2>
+          <p>개념 정리를 마친 뒤 해당 반의 챌린지를 열어주세요. 학생 화면은 자동으로 잠금 해제됩니다.</p>
+        </div>
+      </div>
+      <div id="challengeControls" class="challenge-control-grid">
+        <button type="button" class="challenge-toggle" data-challenge-class="B"><span>B반</span><strong>🔒 잠김</strong></button>
+        <button type="button" class="challenge-toggle" data-challenge-class="C"><span>C반</span><strong>🔒 잠김</strong></button>
+        <button type="button" class="challenge-toggle" data-challenge-class="D"><span>D반</span><strong>🔒 잠김</strong></button>
+      </div>
+    </section>
+
+    <section id="teacherChallengeArena" class="teacher-challenge-arena glass">
+      <div class="arena-head">
+        <div>
+          <span class="step-kicker">LIVE FINAL CHALLENGE</span>
+          <h2>실시간 챌린지 모니터</h2>
+          <p>학생들이 FINAL START를 누르면 각 모둠의 조건, CO₂ 발생량과 그래프가 동시에 표시됩니다.</p>
+        </div>
+        <span id="arenaClassLabel" class="arena-class-label">전체 반</span>
+      </div>
+      <div id="challengeArenaGrid" class="challenge-arena-grid">
+        <div class="empty-state">아직 챌린지를 시작한 모둠이 없습니다.</div>
+      </div>
+    </section>
+
+    <div id="teacherStats" class="stats-grid"></div>
+    <div id="syncNotice" class="sync-notice"></div>
+    <div id="groupGrid" class="group-grid"></div>
+  </section>
+</main>
+  <div id="groupModal" class="modal hidden" role="dialog" aria-modal="true">
+  <div class="modal-card glass">
+    <button id="closeModalBtn" class="modal-close" type="button">×</button>
+    <div id="groupDetail"></div>
+  </div>
+</div>
+
+<script>window.YEAST_FIREBASE_CONFIG = null;</script>
+<script>(() => {
+  const colors = ["#38bdf8","#34d399","#fb923c","#a78bfa","#fb7185","#facc15","#22d3ee"];
+  function drawAxes(ctx,w,h,maxY=60){
+    const m={l:54,r:18,t:18,b:38}, pw=w-m.l-m.r, ph=h-m.t-m.b;
+    ctx.clearRect(0,0,w,h); ctx.fillStyle="#06141f"; ctx.fillRect(0,0,w,h);
+    ctx.strokeStyle="#173349"; ctx.lineWidth=1; ctx.fillStyle="#7395a8"; ctx.font="12px sans-serif";
+    for(let y=0;y<=maxY;y+=10){const py=m.t+ph-(y/maxY)*ph;ctx.beginPath();ctx.moveTo(m.l,py);ctx.lineTo(w-m.r,py);ctx.stroke();ctx.fillText(String(y),18,py+4)}
+    for(let x=0;x<=30;x+=5){const px=m.l+(x/30)*pw;ctx.beginPath();ctx.moveTo(px,m.t);ctx.lineTo(px,h-m.b);ctx.stroke();ctx.fillText(String(x),px-5,h-14)}
+    ctx.strokeStyle="#6f8797";ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(m.l,m.t);ctx.lineTo(m.l,h-m.b);ctx.lineTo(w-m.r,h-m.b);ctx.stroke();
+    ctx.fillStyle="#a8bdc8";ctx.fillText("CO₂ (mL)",8,12);ctx.fillText("시간 (분)",w/2-24,h-4);
+    return {m,pw,ph,maxY};
+  }
+  function drawSeries(canvas, experiments, progressMap={}) {
+    if(!canvas) return;
+    const ctx=canvas.getContext("2d"), w=canvas.width, h=canvas.height;
+    const maxData=Math.max(60,...experiments.flatMap(e=>(e.curve||[]).map(p=>Number(p.co2)||0)));
+    const maxY=Math.ceil(maxData/10)*10;
+    const geo=drawAxes(ctx,w,h,maxY);
+    experiments.forEach((e,idx)=>{
+      const pts=e.curve||[]; const upto=progressMap[e.id] ?? pts.length;
+      ctx.strokeStyle=e.color||colors[idx%colors.length];ctx.fillStyle=e.color||colors[idx%colors.length];ctx.lineWidth=3;ctx.beginPath();
+      pts.slice(0,upto).forEach((p,i)=>{const x=geo.m.l+(p.minute/30)*geo.pw;const y=geo.m.t+geo.ph-(p.co2/geo.maxY)*geo.ph;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)});ctx.stroke();
+      pts.slice(0,upto).forEach(p=>{const x=geo.m.l+(p.minute/30)*geo.pw;const y=geo.m.t+geo.ph-(p.co2/geo.maxY)*geo.ph;ctx.beginPath();ctx.arc(x,y,3.2,0,Math.PI*2);ctx.fill()})
+    })
+  }
+  function drawMini(canvas, curve, color="#38bdf8"){
+    if(!canvas) return; const ctx=canvas.getContext("2d"),w=canvas.width,h=canvas.height;ctx.clearRect(0,0,w,h);ctx.fillStyle="#06141f";ctx.fillRect(0,0,w,h);
+    const max=Math.max(1,...(curve||[]).map(p=>p.co2||0));ctx.strokeStyle="#18384e";ctx.beginPath();ctx.moveTo(6,h-8);ctx.lineTo(w-6,h-8);ctx.stroke();
+    ctx.strokeStyle=color;ctx.lineWidth=2;ctx.beginPath();(curve||[]).forEach((p,i)=>{const x=7+(p.minute/30)*(w-14),y=h-9-(p.co2/max)*(h-18);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)});ctx.stroke()
+  }
+  window.YeastCharts={colors,drawSeries,drawMini};
+})();</script>
+<script>(() => {
+  const substrateName={glucose:"포도당",sucrose:"설탕",fructose:"과당",starch:"전분",none:"유기물 없음"};
+  const VOLUME_ML=20;
+  const GAS_ML_PER_MMOL=24.8; // 약 25~30℃에서 1 mmol 기체의 부피 근사
+  const ETHANOL_DENSITY_G_ML=0.789;
+
+  function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+  function interpolate(points,x){
+    if(x<=points[0][0])return points[0][1];
+    if(x>=points.at(-1)[0])return points.at(-1)[1];
+    for(let i=0;i<points.length-1;i++){
+      const [x1,y1]=points[i], [x2,y2]=points[i+1];
+      if(x>=x1&&x<=x2){
+        const t=(x-x1)/(x2-x1);
+        return y1+(y2-y1)*t
+      }
+    }
+    return 0
+  }
+
+  function temperatureFactor(t){
+    // 30℃ 부근을 1.0으로 둔 넓은 활성 곡선.
+    // 40℃ 이상에서는 열 스트레스, 10~20℃에서는 반응속도 저하를 반영.
+    return interpolate([[10,.10],[15,.28],[20,.52],[25,.78],[30,1.00],[35,.92],[40,.58],[45,.16],[50,.02]],t)
+  }
+
+  function sugarFactor(s){
+    // 낮은 농도: 기질 제한 / 5~12%: 넓은 고활성 구간 / 15~25%: 고삼투 스트레스 반영.
+    return interpolate([[0,0],[1,.34],[2,.58],[5,.90],[8,1.00],[10,1.00],[12,.97],[15,.90],[20,.77],[25,.62]],s)
+  }
+
+  function substrateFactor(kind){
+    // glucose/sucrose/fructose는 S. cerevisiae가 잘 이용.
+    // fructose는 평균적으로 glucose보다 다소 느리게, starch는 일반 제빵효모가 직접 거의 이용하지 못하도록 처리.
+    return {glucose:1.00,sucrose:.95,fructose:.84,starch:.00,none:.00}[kind] ?? 0
+  }
+
+  function initialSugarG(c){
+    // % (w/v): 100 mL 중 g. 표준 반응액 20 mL 기준.
+    return Math.max(0,Number(c.sugar)||0)*VOLUME_ML/100
+  }
+
+  function glucoseEquivalentMmolAvailable(c){
+    const g=initialSugarG(c);
+    if(c.substrate==="glucose"||c.substrate==="fructose") return g/180.156*1000;
+    if(c.substrate==="sucrose") return (g/342.296*1000)*2;
+    // 일반 제빵효모는 전분을 직접 발효할 수 없도록 모델에서 0 처리.
+    return 0
+  }
+
+  function sugarConsumedG(c,glucoseEqMmol){
+    if(c.substrate==="sucrose") return (glucoseEqMmol/2)*342.296/1000;
+    if(c.substrate==="glucose"||c.substrate==="fructose") return glucoseEqMmol*180.156/1000;
+    return 0
+  }
+
+  function kineticAnchors(c){
+    // 30℃ S. cerevisiae 문헌값을 기준으로 한 앵커.
+    // anaerobic glucose-excess: q_glucose ~13.4, q_CO2 ~21.6, q_ethanol ~19.6 mmol gDW^-1 h^-1
+    // aerobic glucose medium: q_glucose ~10.9, q_CO2 ~12.8, q_ethanol ~17.6, q_O2 ~4.6 mmol gDW^-1 h^-1
+    if(c.oxygen==="off"){
+      return {qGlc:13.4,qCO2:21.6,qEtOH:19.6,qO2:0}
+    }
+    return {qGlc:10.9,qCO2:12.8,qEtOH:17.6,qO2:4.6}
+  }
+
+  function finalOutcomes(c){
+    const yeast=Math.max(0,Number(c.yeast)||0);
+    const initialG=initialSugarG(c);
+    const availableEq=glucoseEquivalentMmolAvailable(c);
+
+    if(yeast<=0 || initialG<=0 || availableEq<=0){
+      return {
+        co2:0,o2:0,ethanol:0,atp:0,atpMmol:0,
+        used:0,remaining:100,remainingG:initialG,consumedG:0
+      }
+    }
+
+    const tf=temperatureFactor(Number(c.temp)||0);
+    const sf=sugarFactor(Number(c.sugar)||0);
+    const cf=substrateFactor(c.substrate);
+    const anchor=kineticAnchors(c);
+
+    // 건조효모의 재수화/초기 적응을 포함한 30분 classroom-scale 보정.
+    // 논문의 활성 배양 세포 속도를 그대로 쓰지 않고 초기 30분에 0.65 배율 적용.
+    const activation=.65;
+    const scale=tf*sf*cf*activation;
+    if(scale<=0){
+      return {
+        co2:0,o2:0,ethanol:0,atp:0,atpMmol:0,
+        used:0,remaining:100,remainingG:initialG,consumedG:0
+      }
+    }
+
+    const potentialGlc=anchor.qGlc*yeast*.5*scale; // mmol glucose-equivalent / 30 min
+    const consumedEq=Math.min(potentialGlc,availableEq*.94);
+    const substrateLimit=potentialGlc>0?consumedEq/potentialGlc:0;
+
+    const co2Mmol=anchor.qCO2*yeast*.5*scale*substrateLimit;
+    const ethanolMmol=anchor.qEtOH*yeast*.5*scale*substrateLimit;
+    const o2Mmol=anchor.qO2*yeast*.5*scale*substrateLimit;
+
+    const co2Ml=co2Mmol*GAS_ML_PER_MMOL;
+    const o2Ml=o2Mmol*GAS_ML_PER_MMOL;
+
+    const ethanolG=ethanolMmol*46.068/1000;
+    const ethanolMl=ethanolG/ETHANOL_DENSITY_G_ML;
+    const ethanolVv=ethanolMl/VOLUME_ML*100;
+
+    const consumedG=Math.min(initialG,sugarConsumedG(c,consumedEq));
+    const remainingG=Math.max(0,initialG-consumedG);
+    const usedPct=initialG>0?clamp(consumedG/initialG*100,0,100):0;
+
+    // ATP 환산량:
+    // 발효는 glucose 1 mol당 net 2 ATP.
+    // 산소 공급 시에는 실제 산소 소비량을 이용해 일부 완전산화를 추정하고,
+    // 그 부분은 약 30 ATP/glucose-equivalent로 계산.
+    let respiredEq=0;
+    if(c.oxygen==="on") respiredEq=Math.min(consumedEq,o2Mmol/6);
+    const fermentativeEq=Math.max(0,consumedEq-respiredEq);
+    const atpMmol=fermentativeEq*2 + respiredEq*30;
+    const atpMeter=clamp(atpMmol/40*100,0,100);
+
+    return {
+      co2:+co2Ml.toFixed(2),
+      o2:+o2Ml.toFixed(2),
+      ethanol:+ethanolVv.toFixed(3),
+      atp:+atpMeter.toFixed(1),
+      atpMmol:+atpMmol.toFixed(2),
+      used:+usedPct.toFixed(1),
+      remaining:+(100-usedPct).toFixed(1),
+      remainingG:+remainingG.toFixed(3),
+      consumedG:+consumedG.toFixed(3)
+    }
+  }
+
+  function makeCurve(c){
+    const fin=finalOutcomes(c), arr=[];
+    const initialG=initialSugarG(c);
+    for(let minute=0;minute<=30;minute++){
+      const x=minute/30;
+      // 초기 적응 후 증가하는 누적형 곡선
+      const shape=x<=0?0:(x*x*(3-2*x));
+      arr.push({
+        minute,
+        co2:+(fin.co2*shape).toFixed(2),
+        o2:+(fin.o2*shape).toFixed(2),
+        ethanol:+(fin.ethanol*shape).toFixed(3),
+        used:+(fin.used*shape).toFixed(1),
+        remaining:+clamp(100-fin.used*shape,0,100).toFixed(1),
+        remainingG:+Math.max(0,initialG-fin.consumedG*shape).toFixed(3),
+        atp:+(fin.atp*shape).toFixed(1),
+        atpMmol:+(fin.atpMmol*shape).toFixed(2)
+      })
+    }
+    return arr
+  }
+
+  function diff(prev,cur){
+    if(!prev) return ["첫 실험"];
+    const out=[];
+    if(prev.substrate!==cur.substrate)out.push(`유기물 ${substrateName[prev.substrate]}→${substrateName[cur.substrate]}`);
+    if(prev.oxygen!==cur.oxygen)out.push(`산소 ${prev.oxygen==="on"?"공급":"공급 없음"}→${cur.oxygen==="on"?"공급":"공급 없음"}`);
+    if(prev.sugar!==cur.sugar)out.push(`당 농도 ${prev.sugar}%→${cur.sugar}%`);
+    if(prev.temp!==cur.temp)out.push(`온도 ${prev.temp}℃→${cur.temp}℃`);
+    if(prev.yeast!==cur.yeast)out.push(`효모량 ${prev.yeast}g→${cur.yeast}g`);
+    return out.length?out:["변경 없음"]
+  }
+
+  window.YeastSim={
+    substrateName,makeCurve,finalOutcomes,diff,clamp,
+    VOLUME_ML,initialSugarG
+  }
+})();</script>
+<script>(() => {
+  const listeners=new Set();
+  const controlListeners=new Set();
+  const safeStorage={
+    get(k){try{return localStorage.getItem(k)}catch(e){return null}},
+    set(k,v){try{localStorage.setItem(k,v)}catch(e){}},
+    keys(){try{return Array.from({length:localStorage.length},(_,i)=>localStorage.key(i))}catch(e){return []}}
+  };
+  const channel=("BroadcastChannel" in window)?new BroadcastChannel("yeast-lab-live"):null;
+  if(channel) channel.onmessage=e=>{
+    if(e.data?.type==="control") controlListeners.forEach(fn=>fn(e.data));
+    else listeners.forEach(fn=>fn(e.data));
+  };
+  let cloud=null, cloudReady=false, cloudError="";
+  async function initCloud(){
+    const cfg=window.YEAST_FIREBASE_CONFIG;
+    if(!cfg||!cfg.databaseURL) return false;
+    try{
+      const [{initializeApp},{getAuth,signInAnonymously},{getDatabase,ref,set,onValue}] = await Promise.all([
+        import("https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js"),
+        import("https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js"),
+        import("https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js")
+      ]);
+      const app=initializeApp(cfg), auth=getAuth(app); await signInAnonymously(auth);
+      const db=getDatabase(app);
+      cloud={db,ref,set,onValue}; cloudReady=true; return true
+    }catch(err){cloudError=String(err);console.warn("Firebase disabled:",err);return false}
+  }
+  const cloudPromise=initCloud();
+  function safeKey(s){return String(s||"group").replace(/[.#$/\[\]]/g,"_").slice(0,80)}
+  async function publish(payload){
+    safeStorage.set("yeast:last:"+payload.key,JSON.stringify(payload));
+    if(channel) channel.postMessage(payload);
+    await cloudPromise;
+    if(cloudReady){
+      const p=`classes/${safeKey(payload.classId)}/groups/${safeKey(payload.key)}`;
+      try{await cloud.set(cloud.ref(cloud.db,p),payload)}catch(e){console.warn(e)}
+    }
+  }
+  function subscribeLocal(fn){listeners.add(fn);return()=>listeners.delete(fn)}
+  async function subscribeCloud(fn){
+    await cloudPromise;if(!cloudReady)return()=>{};
+    const unsub=cloud.onValue(cloud.ref(cloud.db,"classes"),snap=>{
+      const v=snap.val()||{};Object.values(v).forEach(cls=>Object.values(cls.groups||{}).forEach(fn))
+    }); return unsub
+  }
+  function localSnapshot(){
+    const out=[];for(const k of safeStorage.keys()){if(k&&k.startsWith("yeast:last:")){try{const v=safeStorage.get(k);if(v)out.push(JSON.parse(v))}catch{}}}return out
+  }
+  function controlSnapshot(classId){
+    try{
+      const raw=safeStorage.get("yeast:control:"+safeKey(classId));
+      return raw?JSON.parse(raw):{type:"control",classId,challengeEnabled:false,updatedAt:0}
+    }catch{
+      return {type:"control",classId,challengeEnabled:false,updatedAt:0}
+    }
+  }
+  async function publishControl(classId,challengeEnabled){
+    const payload={type:"control",classId,challengeEnabled:!!challengeEnabled,updatedAt:Date.now()};
+    safeStorage.set("yeast:control:"+safeKey(classId),JSON.stringify(payload));
+    if(channel) channel.postMessage(payload);
+    controlListeners.forEach(fn=>fn(payload));
+    await cloudPromise;
+    if(cloudReady){
+      try{await cloud.set(cloud.ref(cloud.db,`controls/${safeKey(classId)}`),payload)}catch(e){console.warn(e)}
+    }
+    return payload
+  }
+  function subscribeControlLocal(fn){controlListeners.add(fn);return()=>controlListeners.delete(fn)}
+  async function subscribeControlCloud(fn){
+    await cloudPromise;if(!cloudReady)return()=>{};
+    return cloud.onValue(cloud.ref(cloud.db,"controls"),snap=>{
+      const v=snap.val()||{};Object.values(v).forEach(fn)
+    })
+  }
+  window.YeastCloud={
+    publish,subscribeLocal,subscribeCloud,localSnapshot,
+    controlSnapshot,publishControl,subscribeControlLocal,subscribeControlCloud,
+    isCloud:()=>cloudReady,status:()=>cloudReady?"Firebase 연결됨":(cloudError?"Firebase 오류":"로컬/데모 모드")
+  };
+})();</script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+<script>
+(function(){
+  const landing=document.getElementById('landingView');
+  const sc=document.getElementById('studentContainer');
+  const tc=document.getElementById('teacherContainer');
+  const teacherModal=document.getElementById('teacherPasswordModal');
+
+  function open(which){
+    landing.classList.remove('active');
+    sc.classList.toggle('hidden',which!=='student');
+    tc.classList.toggle('hidden',which!=='teacher');
+
+    if(which==='student'){
+      const studentViews=[...document.querySelectorAll('#studentApp .view')];
+      const hasActive=studentViews.some(v=>v.classList.contains('active'));
+      if(!hasActive) document.getElementById('joinView')?.classList.add('active');
+    }
+    if(which==='teacher'){
+      const teacherViews=[...document.querySelectorAll('#teacherContainer .view')];
+      teacherViews.forEach(v=>v.classList.remove('active'));
+      document.getElementById('teacherDashboard')?.classList.add('active');
+    }
+    window.scrollTo(0,0);
+  }
+
+  function home(){
+    teacherModal?.classList.add('hidden');
+    teacherModal?.setAttribute('aria-hidden','true');
+    sc.classList.add('hidden');
+    tc.classList.add('hidden');
+    landing.classList.add('active');
+    window.scrollTo(0,0);
+  }
+
+  function requestTeacherAccess(){
+    const msg=document.getElementById('teacherLoginMessage');
+    const input=document.getElementById('teacherPassword');
+    if(msg) msg.textContent='';
+    if(input) input.value='';
+    teacherModal?.classList.remove('hidden');
+    teacherModal?.setAttribute('aria-hidden','false');
+    setTimeout(()=>input?.focus(),50);
+  }
+
+  function closeTeacherAccess(){
+    teacherModal?.classList.add('hidden');
+    teacherModal?.setAttribute('aria-hidden','true');
+    document.getElementById('teacherPassword').value='';
+    document.getElementById('teacherLoginMessage').textContent='';
+  }
+
+  document.getElementById('openStudentBtn').addEventListener('click',()=>open('student'));
+  document.getElementById('openTeacherBtn').addEventListener('click',requestTeacherAccess);
+  document.getElementById('teacherPasswordCancel').addEventListener('click',closeTeacherAccess);
+  teacherModal?.addEventListener('click',e=>{
+    if(e.target===teacherModal) closeTeacherAccess();
+  });
+
+  document.querySelectorAll('a[href="#"]').forEach(a=>a.addEventListener('click',e=>{
+    e.preventDefault();
+    home();
+  }));
+
+  window.YeastNav={
+    home,
+    openStudent:()=>open('student'),
+    openTeacherDashboard:()=>{
+      closeTeacherAccess();
+      open('teacher');
+    },
+    requestTeacherAccess,
+    closeTeacherAccess
+  };
+})();
+</script>
+
+<script>(() => {
+  const $=id=>document.getElementById(id), colors=YeastCharts.colors;
+  const views=[...document.querySelectorAll("#studentApp .view")];
+  const stateKey="yeastStudentStateV1";
+  const safeStorage={
+    get(k){try{return localStorage.getItem(k)}catch(e){return null}},
+    set(k,v){try{localStorage.setItem(k,v)}catch(e){}},
+    remove(k){try{localStorage.removeItem(k)}catch(e){}}
+  };
+  const defaults={classId:"",group:"",members:"",stage:"join",hypothesis:"",experiments:[],reflection:{},challenge:null,current:null};
+  let state={...defaults}; let running=false, timer=null, challengeUnlocked=false, warningFocusId=null;
+  const thinkerBellLinks={
+    B:"https://b.tkbell.co.kr/tkboard/woi/1192365/1T94oz3pq4.do?pageSeq=2526603",
+    C:"https://b.tkbell.co.kr/tkboard/woi/1192365/Zq63fn812w.do?pageSeq=2526604",
+    D:"https://b.tkbell.co.kr/tkboard/woi/1192365/qq8lp1yFTu.do?pageSeq=2526607"
+  };
+  try{state={...defaults,...JSON.parse(safeStorage.get(stateKey)||"{}")}}catch{}
+  state.reflection=state.reflection||{};
+  if(!Array.isArray(state.reflection.selectedExperimentIds)) state.reflection.selectedExperimentIds=[];
+  function save(){safeStorage.set(stateKey,JSON.stringify(state)); sync()}
+  function key(){return `${state.classId}-${state.group}`.trim()}
+  function show(id){
+    views.forEach(v=>v.classList.toggle("active",v.id===id));
+    state.stage=id.replace("View","");
+    save();
+    window.scrollTo(0,0);
+    if(id==="reflectionView")renderReflection();
+    if(id==="reportView")renderReport();
+    if(id==="challengeView")updateChallengeAttemptUI();
+  }
+  function updateThinkerBell(){
+    const btn=$("thinkerBellBtn");
+    if(!btn)return;
+    const url=thinkerBellLinks[state.classId];
+    if(url){
+      btn.dataset.url=url;
+      btn.classList.remove("disabled");
+      btn.setAttribute("aria-disabled","false");
+      btn.textContent=`${state.classId}반 띵커벨 보드 ↗`;
+    }else{
+      delete btn.dataset.url;
+      btn.classList.add("disabled");
+      btn.setAttribute("aria-disabled","true");
+      btn.textContent="띵커벨 보드 ↗";
+    }
+  }
+  $("thinkerBellBtn").addEventListener("click",(event)=>{
+    event.preventDefault();
+    event.stopPropagation();
+    const btn=$("thinkerBellBtn");
+    const url=thinkerBellLinks[state.classId] || btn?.dataset.url;
+    if(!url){
+      showWarning("반을 먼저 선택하면 해당 반의 띵커벨 보드가 연결됩니다.");
+      return false
+    }
+
+    // 현재 페이지(location)는 건드리지 않고 빈 새 탭을 만든 뒤 그 탭에만 URL을 넣는다.
+    const newTab=window.open("about:blank","_blank");
+    if(!newTab){
+      showWarning("브라우저에서 새 창이 차단되었습니다. 팝업 허용 후 다시 눌러주세요.");
+      return false
+    }
+    try{newTab.opener=null}catch(e){}
+    newTab.location.replace(url);
+    return false
+  });
+  function showWarning(message,focusId=null){
+    warningFocusId=focusId;
+    const modal=$("warningModal"), text=$("warningText");
+    let shown=false;
+    if(modal && text){
+      text.textContent=message;
+      modal.classList.remove("hidden");
+      modal.style.display="grid";
+      modal.style.visibility="visible";
+      modal.style.opacity="1";
+      modal.setAttribute("aria-hidden","false");
+      shown=true;
+      setTimeout(()=>$("warningOkBtn")?.focus(),30);
+    }
+    if(!shown){
+      window.alert(message);
+      if(focusId)setTimeout(()=>$(`${focusId}`)?.focus(),50);
+    }
+  }
+  function closeWarning(){
+    const modal=$("warningModal");
+    if(modal){
+      modal.classList.add("hidden");
+      modal.style.display="none";
+      modal.setAttribute("aria-hidden","true");
+    }
+    if(warningFocusId){
+      const el=$(warningFocusId);
+      if(el)setTimeout(()=>{el.focus();el.scrollIntoView?.({behavior:"smooth",block:"center"})},80);
+    }
+    warningFocusId=null;
+  }
+  document.addEventListener("click",e=>{
+    if(e.target?.id==="warningOkBtn"){closeWarning();return}
+    if(e.target?.id==="warningModal")closeWarning();
+  });
+
+  function sync(extra={}){
+    if(!state.classId||!state.group)return;
+    const last=state.experiments[state.experiments.length-1];
+    YeastCloud.publish({
+      key:key(),classId:state.classId,group:state.group,members:state.members,stage:state.stage,
+      current:state.current,hypothesis:state.hypothesis,experiments:state.experiments,reflection:state.reflection,challenge:state.challenge,
+      latestCurve:last?.curve||[],updatedAt:Date.now(),...extra
+    })
+  }
+  function applyChallengeGate(enabled){
+    challengeUnlocked=!!enabled;
+    const btn=$("challengeGateBtn");
+    if(!btn)return;
+    btn.disabled=!challengeUnlocked;
+    btn.textContent=challengeUnlocked?"🎮 FINAL CHALLENGE 시작 →":"🔒 교사 활성화 대기";
+    btn.classList.toggle("locked-btn",!challengeUnlocked);
+    btn.classList.toggle("challenge-ready",challengeUnlocked);
+  }
+  function refreshChallengeGate(){
+    if(!state.classId){applyChallengeGate(false);return}
+    const c=YeastCloud.controlSnapshot(state.classId);
+    applyChallengeGate(!!c.challengeEnabled);
+  }
+  YeastCloud.subscribeControlLocal(payload=>{
+    if(payload?.classId===state.classId) applyChallengeGate(!!payload.challengeEnabled)
+  });
+  YeastCloud.subscribeControlCloud(payload=>{
+    if(payload?.classId===state.classId) applyChallengeGate(!!payload.challengeEnabled)
+  });
+  function updateHypothesisUI(){
+    const input=$("hypothesisInput"), box=$("hypothesisBox"), status=$("hypothesisStatus"), btn=$("saveHypothesisBtn");
+    if(!input)return;
+    input.value=state.hypothesis||"";
+    const locked=state.experiments.length>0 || running;
+    input.readOnly=locked;
+    if(box) box.classList.toggle("locked",locked);
+    if(status) status.textContent=locked?"🔒 첫 실험 시작 시 저장됨":"첫 실험 전까지 수정 가능";
+    if(btn) btn.textContent=locked?"실험 화면으로 돌아가기 →":"가설 저장하고 실험 시작 →";
+  }
+  function setHypothesisError(msg=""){
+    const box=$("hypothesisBox"), out=$("hypothesisMessage");
+    if(box) box.classList.toggle("error",!!msg);
+    if(out) out.textContent=msg;
+  }
+  function restore(){
+    if(state.classId) document.querySelector(`[data-class="${state.classId}"]`)?.classList.add("active");
+    $("groupName").value=state.group||"";$("memberNames").value=state.members||"";
+    $("studentIdentity").textContent=state.classId?`${state.classId}반 · ${state.group}`:"미입장";
+    if(state.classId&&state.group&&state.stage!=="join") show((state.stage||"lab")+"View"); else show("joinView");
+    renderLog();updateGraph();refreshChallengeGate();updateHypothesisUI();updateThinkerBell();updateChallengeAttemptUI()
+  }
+  document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>show(b.dataset.go)));
+  document.querySelectorAll("[data-class]").forEach(b=>b.addEventListener("click",()=>{
+    document.querySelectorAll("[data-class]").forEach(x=>x.classList.remove("active"));
+    b.classList.add("active");
+    state.classId=b.dataset.class;
+    $("classFieldWrap")?.classList.remove("required-error");
+    $("classInlineError")?.classList.add("hidden");
+    $("joinError").textContent="";
+    updateThinkerBell();
+  }));
+  $("groupName").addEventListener("input",()=>{
+    if($("groupName").value.trim()){
+      $("groupFieldWrap")?.classList.remove("required-error");
+      $("groupInlineError")?.classList.add("hidden");
+      $("joinError").textContent="";
+    }
+  });
+  $("memberNames").addEventListener("input",()=>{
+    if($("memberNames").value.trim()){
+      $("membersFieldWrap")?.classList.remove("required-error");
+      $("membersInlineError")?.classList.add("hidden");
+      $("joinError").textContent="";
+    }
+  });
+  $("joinBtn").addEventListener("click",()=>{
+    state.group=$("groupName").value.trim();
+    state.members=$("memberNames").value.trim();
+
+    // 이전 오류 표시 초기화
+    ["classFieldWrap","groupFieldWrap","membersFieldWrap"].forEach(id=>$(id)?.classList.remove("required-error"));
+    ["classInlineError","groupInlineError","membersInlineError"].forEach(id=>$(id)?.classList.add("hidden"));
+
+    const missing=[];
+    if(!state.classId){
+      missing.push("반 선택");
+      $("classFieldWrap")?.classList.add("required-error");
+      $("classInlineError")?.classList.remove("hidden");
+    }
+    if(!state.group){
+      missing.push("모둠명");
+      $("groupFieldWrap")?.classList.add("required-error");
+      $("groupInlineError")?.classList.remove("hidden");
+    }
+    if(!state.members){
+      missing.push("학생 이름");
+      $("membersFieldWrap")?.classList.add("required-error");
+      $("membersInlineError")?.classList.remove("hidden");
+    }
+
+    if(missing.length){
+      $("joinError").textContent="빨간색으로 표시된 필수 항목을 모두 입력하세요.";
+      const firstFocus=!state.classId?null:(!state.group?"groupName":"memberNames");
+      showWarning(`실험실 입장에 필요한 정보가 비어 있습니다.\n${missing.join(" · ")}을(를) 확인하세요.`,firstFocus);
+
+      if(!state.classId){
+        setTimeout(()=>$("classPicker")?.scrollIntoView?.({behavior:"smooth",block:"center"}),120);
+      }
+      return
+    }
+
+    $("joinError").textContent="";
+    $("studentIdentity").textContent=`${state.classId}반 · ${state.group}`;
+    updateThinkerBell();
+    refreshChallengeGate();
+    show("hypothesisView");
+    updateHypothesisUI();
+  });
+  $("resetBtn").addEventListener("click",()=>{if(confirm("이 기기의 학생 진행 기록을 초기화할까요?")){safeStorage.remove(stateKey);location.reload()}});
+  const controls={
+    substrate:$("substrateSelect"),oxygen:$("oxygenSelect"),sugar:$("sugarRange"),temp:$("tempRange"),yeast:$("yeastRange")
+  };
+  function setExperimentControlsLocked(locked){
+    const zone=$("experimentSettingsZone");
+    const overlay=$("experimentRunningOverlay");
+    Object.values(controls).forEach(el=>{
+      if(el) el.disabled=locked;
+    });
+    if($("reasonInput")) $("reasonInput").disabled=locked;
+    if($("runBtn")) $("runBtn").disabled=locked;
+
+    zone?.classList.toggle("is-running",locked);
+    overlay?.classList.toggle("hidden",!locked);
+
+    if($("runBtn")){
+      $("runBtn").textContent=locked?"실험 진행 중…":"실험 시작";
+    }
+  }
+  function currentConditions(){return {substrate:controls.substrate.value,oxygen:controls.oxygen.value,sugar:+controls.sugar.value,temp:+controls.temp.value,yeast:+controls.yeast.value}}
+  function updateControlLabels(){
+    $("sugarOut").textContent=controls.sugar.value+"%";$("tempOut").textContent=controls.temp.value+"℃";$("yeastOut").textContent=(+controls.yeast.value).toFixed(1)+" g";
+    const prev=state.experiments.at(-1)?.conditions, cur=currentConditions(), changed=YeastSim.diff(prev,cur);
+    $("changedConditions").textContent=changed.join(" · ");$("multiVarWarning").classList.toggle("hidden",changed.filter(x=>x!=="첫 실험"&&x!=="변경 없음").length<2);
+    $("substrateCaption").textContent=YeastSim.substrateName[cur.substrate];$("oxygenCaption").textContent=cur.oxygen==="on"?"산소 공급":"산소 공급 없음"
+  }
+  Object.values(controls).forEach(el=>el.addEventListener("input",updateControlLabels));
+  $("hypothesisInput").addEventListener("input",()=>{
+    if(state.experiments.length>0 || running)return;
+    state.hypothesis=$("hypothesisInput").value;
+    setHypothesisError("");
+    $("hypothesisBox")?.classList.remove("required-error");
+    $("hypothesisInlineError")?.classList.add("hidden");
+    save();
+  });
+  $("reasonInput").addEventListener("input",()=>{
+    const wrap=$("reasonInputWrap"), err=$("reasonInlineError");
+    if($("reasonInput").value.trim()){
+      wrap?.classList.remove("required-error");
+      err?.classList.add("hidden");
+    }
+  });
+  $("saveHypothesisBtn").addEventListener("click",()=>{
+    const hypothesis=$("hypothesisInput").value.trim();
+    if(!hypothesis){
+      const box=$("hypothesisBox"), inline=$("hypothesisInlineError");
+      box?.classList.add("required-error");
+      inline?.classList.remove("hidden");
+      showWarning("초기 가설이 비어 있습니다.\n우리 모둠의 초기 가설을 입력한 뒤 다시 눌러주세요.","hypothesisInput");
+      setTimeout(()=>$("hypothesisInput")?.focus(),120);
+      return;
+    }
+    $("hypothesisBox")?.classList.remove("required-error");
+    $("hypothesisInlineError")?.classList.add("hidden");
+    if(state.experiments.length===0){
+      state.hypothesis=hypothesis;
+      save();
+    }
+    show("labView");
+  });
+  updateControlLabels();
+  function bubble(rate){
+    const layer=$("bubbleLayer");
+    if(!layer || rate<=0.001) return;
+
+    const count=Math.max(1,Math.min(5,Math.round(rate*5)));
+    for(let i=0;i<count;i++){
+      const b=document.createElement("i");
+      b.className="gas-bubble";
+      const size=4+Math.random()*8;
+      const startX=18+Math.random()*78;
+      const startY=210+Math.random()*28;
+      const rise=105+Math.random()*95;
+      const drift=(Math.random()-.5)*18;
+      const duration=1250+Math.random()*850;
+
+      b.style.width=size+"px";
+      b.style.height=size+"px";
+      b.style.left=startX+"px";
+      b.style.top=startY+"px";
+      layer.appendChild(b);
+
+      const t0=performance.now();
+      function frame(t){
+        const k=Math.min(1,(t-t0)/duration);
+        const eased=1-Math.pow(1-k,2);
+        b.style.transform=`translate(${drift*eased}px, ${-rise*eased}px) scale(${1+.14*eased})`;
+        b.style.opacity=String(1-k*.92);
+        if(k<1) requestAnimationFrame(frame); else b.remove();
+      }
+      requestAnimationFrame(frame);
+    }
+  }
+  function atpLabel(v){return v<20?"낮음":v<55?"중간":"높음"}
+  function setLive(p,c){
+    $("simTime").textContent=p.minute+" min";
+    $("co2Live").textContent=p.co2.toFixed(1)+" mL";
+    $("o2Live").textContent=p.o2.toFixed(1)+" mL";
+    $("ethanolLive").textContent=p.ethanol.toFixed(2)+" %";
+    $("substrateLive").textContent=p.remainingG.toFixed(2)+" g";
+    $("substrateMeter").style.width=p.remaining+"%";
+    $("atpLive").textContent=p.atpMmol.toFixed(1)+" mmol";
+    $("atpMeter").style.width=p.atp+"%";
+
+    const liquid=$("liquidLevel"), pellet=$("pelletCore"), suspension=$("yeastSuspension");
+    const yeastAmount=Math.max(0, Number(c.yeast)||0);
+    const yeastNorm=Math.min(1, yeastAmount/2);
+
+    if(liquid){
+      liquid.style.height="54%";
+      liquid.style.opacity=yeastAmount===0 ? ".38" : ".96";
+      liquid.style.filter=yeastAmount===0
+        ? "saturate(.45) brightness(1.08)"
+        : (c.oxygen==="on" ? "saturate(.80) brightness(1.06)" : "saturate(1.02) brightness(.99)");
+    }
+    if(pellet){
+      if(yeastAmount===0){
+        pellet.style.opacity="0";
+        pellet.style.transform="scaleY(0.15)";
+      }else{
+        const scale=.30 + yeastNorm*1.10;
+        pellet.style.transform=`scaleY(${scale.toFixed(2)})`;
+        pellet.style.opacity=String(0.28 + yeastNorm*0.66);
+      }
+    }
+    if(suspension){
+      if(yeastAmount===0){
+        suspension.style.opacity="0";
+      }else{
+        const turbidity=.12 + yeastNorm*.70;
+        suspension.style.opacity=String(turbidity);
+      }
+    }
+    bubble(p.co2/170);
+  }
+  function updateGraph(progress={}){
+    YeastCharts.drawSeries($("mainGraph"),state.experiments,progress)
+  }
+  function renderLog(){
+    $("trialCount").textContent=state.experiments.length+"회";
+    const box=$("experimentLog");
+    if(!state.experiments.length){
+      box.innerHTML='<div class="empty-state">첫 실험을 수행하면 실험 1, 실험 2 형태로 기록됩니다. 클릭하면 조건·선택 이유·결과를 펼쳐볼 수 있습니다.</div>';
+      return
+    }
+    box.innerHTML=state.experiments.map((e,i)=>{
+      const f=e.curve.at(-1),c=e.conditions,d=e.changed.join(" · ");
+      return `<article class="log-card" data-log-index="${i}" style="--card-color:${e.color}">
+        <button class="log-summary" type="button" aria-expanded="false">
+          <span class="log-summary-left"><span class="color-dot" style="--dot:${e.color}"></span>실험 ${i+1}</span>
+          <span class="log-chevron">⌄</span>
+        </button>
+        <div class="log-details">
+          <p><b>조건:</b> ${YeastSim.substrateName[c.substrate]} · ${c.oxygen==="on"?"산소 공급":"산소 공급 없음"} · 당 ${c.sugar}% · ${c.temp}℃ · 효모 ${c.yeast.toFixed(1)}g</p>
+          <p><b>이전 실험과 변경:</b> ${d}</p>
+          <p><b>선택 이유:</b> ${escapeHtml(e.reason)}</p>
+          <div class="results">
+            <span class="result-chip">CO₂ 누적 ${f.co2.toFixed(1)}mL</span>
+            <span class="result-chip">에탄올 ${f.ethanol.toFixed(2)}%</span>
+            <span class="result-chip">O₂ 소비 ${f.o2.toFixed(1)}mL</span>
+            <span class="result-chip">ATP 환산 ${f.atpMmol.toFixed(1)}mmol</span>
+          </div>
+          <div class="metric-wording">CO₂·O₂·에탄올·당 잔량은 문헌 범위 기반 추정값이며, ATP는 대사경로 이론수율 기반 누적 환산값입니다.</div>
+        </div>
+      </article>`
+    }).join("");
+
+    box.querySelectorAll(".log-summary").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        const card=btn.closest(".log-card");
+        const open=!card.classList.contains("open");
+        card.classList.toggle("open",open);
+        btn.setAttribute("aria-expanded",String(open));
+      })
+    })
+  }
+  $("expandAllLogsBtn").addEventListener("click",()=>{
+    document.querySelectorAll("#experimentLog .log-card").forEach(card=>{
+      card.classList.add("open");
+      card.querySelector(".log-summary")?.setAttribute("aria-expanded","true")
+    })
+  });
+  $("collapseAllLogsBtn").addEventListener("click",()=>{
+    document.querySelectorAll("#experimentLog .log-card").forEach(card=>{
+      card.classList.remove("open");
+      card.querySelector(".log-summary")?.setAttribute("aria-expanded","false")
+    })
+  });
+  $("runBtn").addEventListener("click",()=>{
+    if(running)return;
+    if(!state.hypothesis){
+      showWarning("초기 가설이 저장되지 않았습니다. 가설 작성 화면에서 먼저 가설을 입력하세요.");
+      show("hypothesisView");updateHypothesisUI();return;
+    }
+    const reason=$("reasonInput").value.trim();
+    if(!reason){
+      const wrap=$("reasonInputWrap"), err=$("reasonInlineError");
+      wrap?.classList.add("required-error");
+      err?.classList.remove("hidden");
+      $("labMessage").textContent="이번 실험 조건을 선택한 이유를 입력하세요.";
+      showWarning("이번 실험 조건을 선택한 이유가 비어 있습니다.\n이유를 입력한 뒤 다시 ‘실험 시작’을 눌러주세요.","reasonInput");
+      setTimeout(()=>$("reasonInput")?.focus(),120);
+      return;
+    }
+    $("reasonInputWrap")?.classList.remove("required-error");
+    $("reasonInlineError")?.classList.add("hidden");
+    $("labMessage").textContent="";
+    running=true;
+    updateHypothesisUI();
+    setExperimentControlsLocked(true);
+    const c=currentConditions(), prev=state.experiments.at(-1)?.conditions, changed=YeastSim.diff(prev,c), curve=YeastSim.makeCurve(c); if($("bubbleLayer")) $("bubbleLayer").replaceChildren();
+    const exp={id:`e${Date.now()}`,conditions:c,changed,reason,curve,color:colors[state.experiments.length%colors.length],createdAt:Date.now()};
+    state.current={conditions:c,reason,minute:0,co2:0};sync();
+    let minute=0;
+    timer=setInterval(()=>{
+      const p=curve[minute];setLive(p,c);state.current={conditions:c,reason,minute,co2:p.co2,o2:p.o2,ethanol:p.ethanol,curve:curve.slice(0,minute+1)};sync();
+      const preview=[...state.experiments,exp];YeastCharts.drawSeries($("mainGraph"),preview,{[exp.id]:minute+1});
+      if(minute>=30){
+        clearInterval(timer);
+        state.experiments.push(exp);
+        state.current=null;
+        running=false;
+        setExperimentControlsLocked(false);
+        $("reasonInput").value="";
+        $("reasonInputWrap")?.classList.remove("required-error");
+        $("reasonInlineError")?.classList.add("hidden");
+        save();
+        renderLog();
+        updateGraph();
+        updateControlLabels();
+        updateHypothesisUI()
+      }
+      minute++
+    },1000)
+  });
+  $("goReflectionBtn").addEventListener("click",()=>{
+    if(state.experiments.length<1){
+      showWarning("생각 변화 정리를 하려면 최소 1회 실험을 수행해야 합니다.");
+      return
+    }
+    show("reflectionView")
+  });
+  function selectedExperiments(){
+    const ids=new Set(state.reflection?.selectedExperimentIds||[]);
+    return state.experiments
+      .map((e,index)=>({experiment:e,index}))
+      .filter(item=>ids.has(item.experiment.id));
+  }
+  function normalizeSelectedExperiments(){
+    const valid=new Set(state.experiments.map(e=>e.id));
+    let ids=(state.reflection?.selectedExperimentIds||[]).filter(id=>valid.has(id)).slice(0,5);
+    // 실험이 1개뿐이면 자연스럽게 그 1개를 자동 선택
+    if(state.experiments.length===1 && ids.length===0) ids=[state.experiments[0].id];
+    state.reflection.selectedExperimentIds=ids;
+  }
+  function toggleEvidenceSelection(expId){
+    normalizeSelectedExperiments();
+    const ids=[...state.reflection.selectedExperimentIds];
+    const idx=ids.indexOf(expId);
+    if(idx>=0){
+      ids.splice(idx,1);
+    }else{
+      if(ids.length>=5){
+        showWarning("결과 페이지에는 실험을 최대 5개까지만 선택할 수 있습니다.");
+        $("evidenceCards")?.classList.add("evidence-limit-flash");
+        setTimeout(()=>$("evidenceCards")?.classList.remove("evidence-limit-flash"),350);
+        return
+      }
+      ids.push(expId);
+    }
+    state.reflection.selectedExperimentIds=ids;
+    save();
+    renderReflection();
+  }
+  function renderReflection(){
+    normalizeSelectedExperiments();
+    const chosen=selectedExperiments();
+    YeastCharts.drawSeries($("reflectionGraph"),chosen.map(x=>x.experiment));
+    $("evidenceCount").textContent=`${chosen.length}개 선택 / 최대 5개`;
+
+    const selectedSet=new Set(state.reflection.selectedExperimentIds||[]);
+    $("evidenceCards").innerHTML=state.experiments.map((e,i)=>{
+      const f=e.curve.at(-1),c=e.conditions, selected=selectedSet.has(e.id);
+      return `<button type="button" class="evidence-card selectable ${selected?"selected":""}" data-exp-id="${e.id}" style="--card-color:${e.color}" aria-pressed="${selected}">
+        <span class="evidence-select-mark">${selected?"✓":""}</span>
+        <div class="evidence-title">실험 ${i+1}</div>
+        <div class="evidence-condition">${YeastSim.substrateName[c.substrate]} · ${c.oxygen==="on"?"산소 공급":"산소 없음"} · 당 ${c.sugar}% · ${c.temp}℃ · 효모 ${c.yeast.toFixed(1)}g</div>
+        <div class="evidence-result">CO₂ ${f.co2.toFixed(1)}mL · 에탄올 ${f.ethanol.toFixed(2)}% · ATP ${f.atpMmol.toFixed(1)}mmol</div>
+        <div class="evidence-reason">선택 이유: ${escapeHtml(e.reason)}</div>
+      </button>`
+    }).join("");
+
+    document.querySelectorAll("#evidenceCards [data-exp-id]").forEach(card=>{
+      card.addEventListener("click",()=>toggleEvidenceSelection(card.dataset.expId))
+    });
+
+    $("reflectionHypothesis").textContent=state.hypothesis||"가설 기록 없음";
+    const r=state.reflection||{};
+    ["keyResult","unexpected","changedThinking","currentExplanation"].forEach(id=>$(id).value=r[id]||"")
+  }
+  ["keyResult","unexpected","changedThinking","currentExplanation"].forEach(id=>$(id).addEventListener("input",()=>{state.reflection[id]=$(id).value;save()}));
+  $("makeReportBtn").addEventListener("click",()=>{
+    normalizeSelectedExperiments();
+    const chosen=selectedExperiments();
+    if(chosen.length<1){
+      showWarning("최종 결과에 반영할 실험을 최소 1개 선택하세요.");
+      $("evidenceCards")?.scrollIntoView?.({behavior:"smooth",block:"center"});
+      return
+    }
+    if(chosen.length>5){
+      showWarning("최종 결과에는 실험을 최대 5개까지만 반영할 수 있습니다.");
+      return
+    }
+    const fields=[
+      ["keyResult","가장 중요한 실험 결과"],
+      ["unexpected","예상과 달랐던 점"],
+      ["changedThinking","생각이 어떻게 바뀌었는지"],
+      ["currentExplanation","현재 우리의 설명"]
+    ];
+    const missing=fields.find(([id])=>!$(id).value.trim());
+    if(missing){showWarning(`‘${missing[1]}’ 항목을 입력하세요.`,missing[0]);return}
+    $("reflectionMessage").textContent="";
+    show("reportView")
+  });
+  function renderReport(){
+    normalizeSelectedExperiments();
+    const chosen=selectedExperiments();
+
+    $("posterTitle").textContent=`${state.group} 연구 결과`;
+    $("posterIdentity").innerHTML=`${state.classId}반<br>${escapeHtml(state.members)}`;
+    $("posterHypothesis").textContent=state.hypothesis||"";
+    $("posterKey").textContent=state.reflection.keyResult||"";
+    $("posterUnexpected").textContent=state.reflection.unexpected||"";
+    $("posterChanged").textContent=state.reflection.changedThinking||"";
+    $("posterExplanation").textContent=state.reflection.currentExplanation||"";
+
+    YeastCharts.drawSeries($("posterGraph"),chosen.map(x=>x.experiment));
+
+    $("posterTrials").innerHTML=chosen.map(({experiment:e,index})=>{
+      const f=e.curve.at(-1),c=e.conditions;
+      const cond=`${YeastSim.substrateName[c.substrate]} · ${c.oxygen==="on"?"산소 공급":"산소 없음"} · 당 ${c.sugar}% · ${c.temp}℃ · 효모 ${c.yeast.toFixed(1)}g`;
+      return `<div class="poster-trial-row" style="--trial-color:${e.color}">
+        <span class="poster-trial-no">실험 ${index+1}</span>
+        <span class="poster-trial-cond">${cond}</span>
+        <span class="poster-trial-reason"><b>선택 이유:</b> ${escapeHtml(e.reason)}</span>
+        <span class="poster-trial-result"><b>결과:</b> CO₂ ${f.co2.toFixed(1)}mL · 에탄올 ${f.ethanol.toFixed(2)}% · ATP ${f.atpMmol.toFixed(1)}mmol</span>
+      </div>`
+    }).join("") || '<div class="empty-state">선택된 실험 없음</div>';
+  }
+  $("captureReportBtn").addEventListener("click",async()=>{
+    if(typeof html2canvas!=="function"){
+      alert("PNG 저장 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인하세요.");
+      return
+    }
+
+    normalizeSelectedExperiments();
+    const chosen=selectedExperiments();
+    const original=$("researchPoster");
+    const clone=original.cloneNode(true);
+    clone.id="researchPosterCapture";
+    clone.classList.add("capture-clone");
+
+    // clone 안의 id 중복은 캡처 직후 제거되므로 화면 동작에는 영향 없음
+    document.body.appendChild(clone);
+
+    // cloneNode는 canvas의 픽셀을 복사하지 않으므로 그래프만 다시 그린다.
+    const cloneGraph=clone.querySelector("#posterGraph");
+    if(cloneGraph){
+      cloneGraph.width=760;
+      cloneGraph.height=315;
+      YeastCharts.drawSeries(cloneGraph,chosen.map(x=>x.experiment));
+    }
+
+    // 레이아웃 계산 후 실제 콘텐츠 경계만 캡처
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+
+    try{
+      const canvas=await html2canvas(clone,{
+        backgroundColor:"#eff6f8",
+        scale:2,
+        useCORS:true,
+        logging:false,
+        width:clone.scrollWidth,
+        height:clone.scrollHeight,
+        windowWidth:1500,
+        windowHeight:900
+      });
+      const a=document.createElement("a");
+      a.href=canvas.toDataURL("image/png");
+      a.download=`${state.classId}반_${state.group}_효모연구결과.png`;
+      a.click()
+    }finally{
+      clone.remove()
+    }
+  });
+  $("challengeGateBtn").addEventListener("click",()=>{
+    refreshChallengeGate();
+    if(!challengeUnlocked)return;
+    show("challengeView")
+  });
+  function updateChallengeAttemptUI(){
+    const attempted=!!state.challenge?.startedAt;
+    const done=!!state.challenge?.done;
+    const controls=$("challengeView")?.querySelector(".challenge-controls");
+    const inputs=[
+      $("challengeSubstrate"),$("challengeSugar"),$("challengeTemp"),$("challengeReason")
+    ].filter(Boolean);
+    inputs.forEach(el=>el.disabled=attempted);
+    if(controls) controls.classList.toggle("locked",attempted);
+
+    const btn=$("challengeRunBtn");
+    if(btn){
+      btn.disabled=attempted;
+      btn.classList.toggle("challenge-run-complete",attempted);
+      if(done) btn.textContent="FINAL CHALLENGE 완료";
+      else if(attempted) btn.textContent="FINAL CHALLENGE 진행 중";
+      else btn.textContent="FINAL START";
+    }
+
+    if(attempted){
+      const c=state.challenge.conditions||{};
+      if($("challengeSubstrate") && c.substrate) $("challengeSubstrate").value=c.substrate;
+      if($("challengeSugar") && c.sugar!=null) $("challengeSugar").value=c.sugar;
+      if($("challengeTemp") && c.temp!=null) $("challengeTemp").value=c.temp;
+      if($("challengeReason")) $("challengeReason").value=state.challenge.reason||"";
+      if($("challengeSugarOut") && c.sugar!=null) $("challengeSugarOut").textContent=c.sugar+"%";
+      if($("challengeTempOut") && c.temp!=null) $("challengeTempOut").textContent=c.temp+"℃";
+      if($("challengeTime")) $("challengeTime").textContent=(state.challenge.minute||0)+" min";
+      if($("challengeCO2")) $("challengeCO2").textContent=Number(state.challenge.co2||0).toFixed(1)+" mL";
+      if(state.challenge.curve?.length){
+        YeastCharts.drawSeries($("challengeGraph"),[{id:"c",curve:state.challenge.curve,color:"#26d9c7"}]);
+      }
+      if(done){
+        $("challengeResult").innerHTML=`최종 도전 완료 · CO₂ <b>${Number(state.challenge.co2||0).toFixed(1)} mL</b> · 다시 도전할 수 없습니다.`;
+      }else{
+        $("challengeResult").textContent="FINAL CHALLENGE가 진행 중입니다. 이 도전은 1회만 가능합니다.";
+      }
+    }else{
+      $("challengeResult").textContent="최종 조건을 설계해 도전하세요. FINAL START는 한 번만 누를 수 있습니다.";
+    }
+  }
+  $("challengeSugar").addEventListener("input",()=>$("challengeSugarOut").textContent=$("challengeSugar").value+"%");
+  $("challengeTemp").addEventListener("input",()=>$("challengeTempOut").textContent=$("challengeTemp").value+"℃");
+  $("challengeReason").addEventListener("input",()=>{
+    if($("challengeReason").value.trim()){
+      $("challengeReasonWrap")?.classList.remove("required-error");
+      $("challengeReasonError")?.classList.add("hidden");
+    }
+  });
+  $("challengeRunBtn").addEventListener("click",()=>{
+    refreshChallengeGate();
+    if(!challengeUnlocked){
+      showWarning("교사가 아직 최종 게임 챌린지를 활성화하지 않았습니다.");
+      return
+    }
+    if(state.challenge?.startedAt){
+      showWarning("FINAL CHALLENGE는 모둠당 1회만 가능합니다. 이미 도전을 시작했습니다.");
+      updateChallengeAttemptUI();
+      return
+    }
+    if(running)return;
+
+    const reason=$("challengeReason").value.trim();
+    if(!reason){
+      $("challengeReasonWrap")?.classList.add("required-error");
+      $("challengeReasonError")?.classList.remove("hidden");
+      showWarning("최종 조건 선택 근거가 비어 있습니다.\n앞선 탐구 결과를 근거로 선택 이유를 입력한 뒤 다시 FINAL START를 눌러주세요.","challengeReason");
+      setTimeout(()=>$("challengeReason")?.focus(),120);
+      return
+    }
+
+    $("challengeReasonWrap")?.classList.remove("required-error");
+    $("challengeReasonError")?.classList.add("hidden");
+
+    const c={
+      substrate:$("challengeSubstrate").value,
+      oxygen:"off",
+      sugar:+$("challengeSugar").value,
+      temp:+$("challengeTemp").value,
+      yeast:1
+    };
+    const curve=YeastSim.makeCurve(c);
+
+    running=true;
+    const startedAt=Date.now();
+    state.stage="challenge";
+    state.challenge={
+      startedAt,
+      conditions:c,
+      reason,
+      minute:0,
+      co2:0,
+      curve:[],
+      done:false
+    };
+    save();
+    updateChallengeAttemptUI();
+
+    let m=0;
+    const t=setInterval(()=>{
+      const p=curve[m];
+      $("challengeTime").textContent=p.minute+" min";
+      $("challengeCO2").textContent=p.co2.toFixed(1)+" mL";
+
+      state.challenge={
+        startedAt,
+        conditions:c,
+        reason,
+        minute:m,
+        co2:p.co2,
+        curve:curve.slice(0,m+1),
+        done:m===30
+      };
+
+      YeastCharts.drawSeries(
+        $("challengeGraph"),
+        [{id:"c",curve,color:"#26d9c7"}],
+        {c:m+1}
+      );
+      save();
+
+      if(m>=30){
+        clearInterval(t);
+        running=false;
+        $("challengeResult").innerHTML=`FINAL CHALLENGE 완료 · 최종 CO₂ <b>${p.co2.toFixed(1)} mL</b> · ${YeastSim.substrateName[c.substrate]} ${c.sugar}% · ${c.temp}℃ · 다시 도전할 수 없습니다.`;
+        save();
+        updateChallengeAttemptUI();
+      }
+      m++
+    },1000)
+  });
+  function escapeHtml(s){return String(s||"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]))}
+  window.addEventListener("beforeunload",()=>{if(timer)clearInterval(timer)});
+  restore()
+})();</script>
+<script>(() => {
+  const $=id=>document.getElementById(id), views=[...document.querySelectorAll("#teacherContainer .view")];
+  const TEACHER_SALT="ylab-teacher-v1::", TEACHER_HASH="17372d957ddbfa9704757d270b2867d465e5526640b8ee60a2b762a9cd9d4e75";
+  let groups=new Map(),filter="ALL",cloudUnsub=null,controlCloudUnsub=null,challengeControls={B:false,C:false,D:false};
+  function show(id){views.forEach(v=>v.classList.toggle("active",v.id===id))}
+  async function sha256(text){const buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(text));return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("")}
+  $("teacherLoginBtn").addEventListener("click",async()=>{
+    const input=$("teacherPassword").value;
+    if(await sha256(TEACHER_SALT+input)===TEACHER_HASH){
+      $("teacherLoginMessage").textContent="";
+      window.YeastNav?.openTeacherDashboard();
+      startMonitor()
+    }else{
+      $("teacherLoginMessage").textContent="비밀번호가 올바르지 않습니다.";
+      $("teacherPassword").value="";
+      $("teacherPassword").focus()
+    }
+  });
+  $("teacherPassword").addEventListener("keydown",e=>{
+    if(e.key==="Enter")$("teacherLoginBtn").click()
+  });
+  $("teacherLogoutBtn").addEventListener("click",()=>{
+    if(cloudUnsub)cloudUnsub();
+    if(controlCloudUnsub)controlCloudUnsub();
+    cloudUnsub=null;
+    controlCloudUnsub=null;
+    window.YeastNav?.home()
+  });
+  document.querySelectorAll("#classTabs button").forEach(b=>b.addEventListener("click",()=>{
+    document.querySelectorAll("#classTabs button").forEach(x=>x.classList.remove("active"));
+    b.classList.add("active");
+    filter=b.dataset.filter;
+    render()
+  }));
+  function onControl(payload){
+    if(!payload?.classId)return;
+    challengeControls[payload.classId]=!!payload.challengeEnabled;
+    renderChallengeControls()
+  }
+  function renderChallengeControls(){
+    document.querySelectorAll(".challenge-toggle").forEach(btn=>{
+      const cls=btn.dataset.challengeClass, enabled=!!challengeControls[cls];
+      btn.classList.toggle("enabled",enabled);
+      const strong=btn.querySelector("strong");
+      if(strong) strong.textContent=enabled?"🔓 활성화됨":"🔒 잠김"
+    })
+  }
+  document.querySelectorAll(".challenge-toggle").forEach(btn=>btn.addEventListener("click",async()=>{
+    const cls=btn.dataset.challengeClass;
+    const next=!challengeControls[cls];
+    challengeControls[cls]=next;
+    renderChallengeControls();
+    await YeastCloud.publishControl(cls,next)
+  }));
+  function ingest(p){if(!p?.key)return;groups.set(p.key,p);render()}
+  async function startMonitor(){
+    groups=new Map();
+    YeastCloud.localSnapshot().forEach(ingest);
+    YeastCloud.subscribeLocal(ingest);
+    cloudUnsub=await YeastCloud.subscribeCloud(ingest);
+    ["B","C","D"].forEach(cls=>{
+      challengeControls[cls]=!!YeastCloud.controlSnapshot(cls).challengeEnabled
+    });
+    YeastCloud.subscribeControlLocal(onControl);
+    controlCloudUnsub=await YeastCloud.subscribeControlCloud(onControl);
+    $("syncNotice").textContent=`동기화 상태: ${YeastCloud.status()} · 다른 기기 실시간 제어는 Firebase 설정 후 사용할 수 있습니다.`;
+    renderChallengeControls();render()
+  }
+  function stageName(s){return({join:"입장",lab:"자유 탐구",reflection:"생각 정리",report:"연구 결과",challenge:"챌린지"}[s]||s||"대기")}
+  function filtered(){
+    return [...groups.values()]
+      .filter(g=>filter==="ALL"||g.classId===filter)
+      .sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0))
+  }
+  function renderChallengeArena(all){
+    const label=$("arenaClassLabel");
+    if(label) label.textContent=filter==="ALL"?"전체 반":`${filter}반`;
+
+    const arena=$("challengeArenaGrid");
+    if(!arena)return;
+
+    // 챌린지 화면에 들어왔거나 FINAL START를 이미 누른 모둠 모두 표시
+    const challengeGroups=all
+      .filter(g=>g.stage==="challenge" || g.challenge?.startedAt)
+      .sort((a,b)=>(a.challenge?.startedAt||Number.MAX_SAFE_INTEGER)-(b.challenge?.startedAt||Number.MAX_SAFE_INTEGER));
+
+    if(!challengeGroups.length){
+      arena.innerHTML='<div class="empty-state">아직 챌린지 화면에 들어온 모둠이 없습니다. 학생들이 FINAL START를 누르면 이곳에 실시간 그래프가 나타납니다.</div>';
+      return
+    }
+
+    arena.innerHTML=challengeGroups.map(g=>{
+      const ch=g.challenge;
+      const c=ch?.conditions||{};
+      const status=ch?.done?"완료":ch?.startedAt?"진행 중":"대기";
+      const cls=ch?.done?"done":ch?.startedAt?"running":"waiting";
+      const minute=ch?.minute??0;
+      const co2=Number(ch?.co2||0);
+      const reason=ch?.reason||"FINAL START 대기 중";
+      return `<article class="arena-card ${cls}" data-arena-key="${esc(g.key)}">
+        <div class="arena-card-head">
+          <h3>${esc(g.classId)}반 · ${esc(g.group)}</h3>
+          <span class="arena-status">${status}</span>
+        </div>
+        <div class="arena-members">${esc(g.members||"")}</div>
+        <div class="arena-cond">
+          <span>${c.substrate?YeastSimName(c.substrate):"당 미정"}</span>
+          <span>${c.sugar!=null?`당 ${c.sugar}%`:"농도 미정"}</span>
+          <span>${c.temp!=null?`${c.temp}℃`:"온도 미정"}</span>
+        </div>
+        <div class="arena-values">
+          <b>${co2.toFixed(1)} mL CO₂</b>
+          <span>${minute}/30 min</span>
+        </div>
+        <div class="arena-reason">${esc(reason)}</div>
+        <canvas class="arena-canvas" width="360" height="110" data-arena-curve="${esc(g.key)}"></canvas>
+      </article>`
+    }).join("");
+
+    challengeGroups.forEach(g=>{
+      const canvas=document.querySelector(`canvas[data-arena-curve="${CSS.escape(g.key)}"]`);
+      const curve=g.challenge?.curve||[];
+      YeastCharts.drawMini(canvas,curve,"#26d9c7")
+    })
+  }
+  function render(){
+    const all=filtered(),active=all.filter(g=>g.current),reflect=all.filter(g=>g.stage==="reflection"),done=all.filter(g=>["report","concept"].includes(g.stage)),challenge=all.filter(g=>g.stage==="challenge");
+    renderChallengeArena(all);
+    $("teacherStats").innerHTML=[
+      ["접속 모둠",all.length],["실험 중",active.length],["생각 정리",reflect.length],["연구 완료",done.length],["챌린지",challenge.length]
+    ].map(([a,b])=>`<div class="stat-card"><span>${a}</span><strong>${b}</strong></div>`).join("");
+    const grid=$("groupGrid");
+    if(!all.length){grid.innerHTML='<div class="empty-state">아직 표시할 모둠이 없습니다. 학생용 페이지를 같은 브라우저의 다른 탭에서 실행하거나 Firebase를 연결하세요.</div>';return}
+    grid.innerHTML=all.map(g=>{
+      const challengeMode=g.stage==="challenge"||g.challenge?.startedAt;
+      const c=challengeMode?(g.challenge?.conditions||{}):(g.current?.conditions||g.experiments?.at(-1)?.conditions||{});
+      const co2=challengeMode?(g.challenge?.co2??0):(g.current?.co2??g.experiments?.at(-1)?.curve?.at(-1)?.co2??0);
+      const minute=challengeMode?(g.challenge?.minute??0):(g.current?.minute??0);
+      const reason=challengeMode?(g.challenge?.reason||"FINAL START 대기"):(g.current?.reason||g.experiments?.at(-1)?.reason||"");
+      return `<article class="group-card" data-key="${esc(g.key)}"><div class="group-title"><h3>${esc(g.classId)}반 · ${esc(g.group)}</h3><span class="stage-tag">${stageName(g.stage)}</span></div>
+      <div class="group-meta">${esc(g.members)} · 실험 ${g.experiments?.length||0}회 · ${timeAgo(g.updatedAt)}</div>
+      <div class="group-conditions"><span>${YeastSimName(c.substrate)}</span><span>${c.oxygen==="on"?"산소 공급":"산소 공급 없음"}</span><span>${c.sugar??"-"}%</span><span>${c.temp??"-"}℃</span></div>
+      <canvas class="mini-canvas" width="360" height="100" data-curve="${esc(g.key)}"></canvas>
+      <div class="typing-preview">현재 ${minute}/30 min · CO₂ ${Number(co2).toFixed(1)} mL · “${esc(reason)}”</div></article>`
+    }).join("");
+    all.forEach(g=>{
+      const cv=document.querySelector(`canvas[data-curve="${CSS.escape(g.key)}"]`);
+      const challengeMode=g.stage==="challenge"||g.challenge?.startedAt;
+      const curve=challengeMode?(g.challenge?.curve||[]):(g.current?.curve||g.latestCurve||[]);
+      YeastCharts.drawMini(cv,curve,challengeMode?"#26d9c7":(g.experiments?.at(-1)?.color||"#38bdf8"))
+    });
+    document.querySelectorAll(".group-card").forEach(card=>card.addEventListener("click",()=>openDetail(groups.get(card.dataset.key))))
+  }
+  function openDetail(g){
+    if(!g)return;
+    const challengeMode=g.stage==="challenge"||g.challenge?.startedAt;
+    const c=challengeMode?(g.challenge?.conditions||{}):(g.current?.conditions||{});
+    const currentText=challengeMode?(g.challenge?.reason||""):(g.current?.reason||"");
+    $("groupDetail").innerHTML=`<span class="step-kicker">${esc(g.classId)} CLASS · GROUP DETAIL</span><h2>${esc(g.group)}</h2><p>${esc(g.members)}</p>
+      <div class="detail-grid"><section><h3>현재 상태</h3><p>${stageName(g.stage)} · ${challengeMode?(g.challenge?.minute??0):(g.current?.minute??0)}/30 min</p><p>${formatConditions(c)}</p><p><b>작성 중:</b> ${esc(currentText)}</p>
+      <canvas id="detailGraph" width="720" height="330" style="width:100%;background:#06141f;border-radius:10px"></canvas></section>
+      <section><h3>실험 기록</h3>${(g.experiments||[]).map((e,i)=>{const f=e.curve?.at(-1)||{};return `<div class="detail-experiment" style="--card-color:${e.color||"#38bdf8"}"><b>실험 ${i+1}</b><br>${formatConditions(e.conditions)}<br>CO₂ ${Number(f.co2||0).toFixed(1)}mL · 에탄올 ${Number(f.ethanol||0).toFixed(2)}% · O₂ 소비 ${Number(f.o2||0).toFixed(1)}mL · ATP 환산 ${Number(f.atpMmol||0).toFixed(1)}mmol<br>이유: ${esc(e.reason)}</div>`}).join("")||"아직 기록 없음"}</section></div>
+      <hr style="border-color:#24445a"><h3>초기 가설</h3><p>${esc(g.hypothesis||"아직 작성 전")}</p><h3>생각 변화 기록</h3><p>${esc(g.reflection?.changedThinking||"아직 작성 전")}</p><p><b>현재 설명:</b> ${esc(g.reflection?.currentExplanation||"아직 작성 전")}</p>`;
+    $("groupModal").classList.remove("hidden");
+    setTimeout(()=>{
+      if(challengeMode && g.challenge?.curve?.length){
+        YeastCharts.drawSeries($("detailGraph"),[{id:"challenge",curve:g.challenge.curve,color:"#26d9c7"}])
+      }else{
+        YeastCharts.drawSeries($("detailGraph"),g.experiments||[])
+      }
+    },20)
+  }
+  $("closeModalBtn").addEventListener("click",()=>$("groupModal").classList.add("hidden"));
+  $("groupModal").addEventListener("click",e=>{if(e.target===$("groupModal"))$("groupModal").classList.add("hidden")});
+  function YeastSimName(k){return({glucose:"포도당",sucrose:"설탕",fructose:"과당",starch:"전분",none:"유기물 없음"}[k]||"조건 미설정")}
+  function formatConditions(c){if(!c||!c.substrate)return"조건 미설정";return `${YeastSimName(c.substrate)} · ${c.oxygen==="on"?"산소 공급":"산소 공급 없음"} · 당 ${c.sugar}% · ${c.temp}℃ · 효모 ${Number(c.yeast).toFixed(1)}g`}
+  function timeAgo(ts){if(!ts)return"-";const s=Math.round((Date.now()-ts)/1000);return s<5?"방금 전":s<60?`${s}초 전`:`${Math.round(s/60)}분 전`}
+  function esc(s){return String(s||"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]))}
+})();</script>
+
+<div id="warningModal" class="warning-modal hidden" role="dialog" aria-modal="true" aria-labelledby="warningTitle">
+  <div class="warning-dialog glass">
+    <div class="warning-icon">!</div>
+    <div>
+      <span class="step-kicker">CHECK REQUIRED INPUT</span>
+      <h2 id="warningTitle">입력 내용을 확인하세요</h2>
+      <p id="warningText"></p>
+    </div>
+    <button id="warningOkBtn" class="primary-btn full" type="button">확인</button>
+  </div>
+</div>
+
+</body>
+</html>
