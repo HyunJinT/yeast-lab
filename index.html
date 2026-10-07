@@ -1713,8 +1713,25 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
 })();</script>
 <script>(() => {
   const substrateName={glucose:"포도당",sucrose:"설탕",fructose:"과당",starch:"전분",none:"유기물 없음"};
+
+  // ─────────────────────────────────────────────────────────────
+  // 30분 · 반응액 20 mL용 S. cerevisiae 교실 가상실험 모델
+  //
+  // 핵심 원칙
+  // 1) 문헌의 g dry biomass당 대사속도를 기준점(anchor)으로 사용한다.
+  // 2) 온도·당 농도·기질 종류·효모량·산소를 모두 동시에 반영한다.
+  // 3) 여러 변인을 동시에 바꿀 때에는 고당×고온/저온 같은 상호작용까지 반영한다.
+  // 4) 기질의 실제 몰수를 계산해, CO₂가 사용 가능한 탄소량을 넘어가지 않게 제한한다.
+  // 5) 같은 조건은 같은 결과가 나오도록 무작위 오차는 넣지 않는다.
+  //
+  // 참고 범위
+  // - anaerobic glucose excess: qGlc≈13.4, qCO2≈21.6, qEtOH≈19.6 mmol gDW⁻¹ h⁻¹
+  // - aerobic sugar-rich batch: qGlc≈12.3, qCO2≈21.4, qEtOH≈19.8, qO2≈2.5
+  //   (S. cerevisiae는 Crabtree-positive라 산소가 있어도 고당에서는 발효가 계속된다.)
+  // ─────────────────────────────────────────────────────────────
+
   const VOLUME_ML=20;
-  const GAS_ML_PER_MMOL=24.8; // 약 25~30℃에서 1 mmol 기체의 부피 근사
+  const GAS_ML_PER_MMOL=24.8; // 약 25~30℃ 부근의 기체 몰부피 근사
   const ETHANOL_DENSITY_G_ML=0.789;
 
   function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
@@ -1732,33 +1749,73 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
   }
 
   function temperatureFactor(t){
-    // baker's yeast의 단시간 CO₂ 생성은 25→30→35℃에서 증가하는 실험 경향을 반영.
-    // 40℃ 이상에서는 열 스트레스와 생존율 저하가 커지도록 보정.
-    return interpolate([[10,.09],[15,.24],[20,.49],[25,.78],[30,1.00],[35,1.08],[40,.60],[45,.11],[50,.01]],t)
+    // 단시간 CO₂ 발생은 25→30→35℃에서 증가하는 경향을 반영하고,
+    // 40℃부터 열 스트레스, 45℃ 이상에서 급격한 활성 저하를 적용한다.
+    return interpolate([
+      [10,.10],[15,.24],[20,.48],[25,.76],[30,1.00],
+      [35,1.10],[40,.58],[45,.08],[50,0.00]
+    ],t)
   }
 
   function sugarFactor(s){
-    // 낮은 농도에서는 기질 제한, 8~12%에서는 높은 발효활성,
-    // 약 18%(180 g/L) 이상부터 high-gravity 영역의 고삼투 스트레스가 점차 커지도록 반영.
-    return interpolate([[0,0],[1,.35],[2,.60],[5,.90],[8,.98],[10,1.00],[12,.99],[15,.94],[18,.87],[20,.80],[25,.63]],s)
+    // 기질 제한 → 8~12% 부근의 높은 활성 → 고농도 삼투 스트레스 순으로 반영.
+    // 농도 자체의 "양"은 아래의 실제 기질 몰수 계산에도 별도로 들어가므로,
+    // 이 값은 주로 세포의 속도/스트레스 효과를 나타낸다.
+    return interpolate([
+      [0,0],[1,.35],[2,.58],[5,.88],[8,1.00],[10,1.03],
+      [12,1.02],[15,.95],[18,.86],[20,.79],[25,.62]
+    ],s)
   }
 
   function substrateFactor(kind){
-    // 단일 탄소원으로 제공할 때 glucose와 fructose의 이용속도는 비교적 유사하며,
-    // sucrose도 invertase에 의해 빠르게 가수분해된다. 일반 제빵효모는 전분을 직접 거의 이용하지 못한다.
-    return {glucose:1.00,sucrose:.95,fructose:.96,starch:.00,none:.00}[kind] ?? 0
+    // baker's yeast는 glucose/fructose를 빠르게 이용하며 sucrose도 invertase로 이용 가능.
+    // 일반 S. cerevisiae가 전분을 직접 분해·발효하지는 못하므로 0 처리.
+    return {
+      glucose:1.00,
+      fructose:.98,
+      sucrose:.94,
+      starch:0.00,
+      none:0.00
+    }[kind] ?? 0
+  }
+
+  function interactionFactor(c){
+    const sugar=Number(c.sugar)||0;
+    const temp=Number(c.temp)||0;
+
+    // 고당 + 고온: 삼투 스트레스와 열 스트레스가 겹치면 단순 곱보다 더 불리.
+    const highSugar=clamp((sugar-15)/10,0,1);
+    const hot=clamp((temp-35)/10,0,1);
+    const highSugarHot=1-.32*highSugar*hot;
+
+    // 고당 + 매우 낮은 온도: 재수화/수송/효소반응 지연을 약하게 추가.
+    const cold=clamp((20-temp)/10,0,1);
+    const highSugarCold=1-.10*highSugar*cold;
+
+    return clamp(highSugarHot*highSugarCold,.25,1)
+  }
+
+  function activationFactor(yeast){
+    // 투입한 활성 건조효모가 30분 내내 논문 속 활성 배양세포와 동일하게 작동하지는 않으므로
+    // 재수화/초기 활성화 보정을 적용. 1 g 초과에서는 단위질량당 효율이 아주 조금 둔화된다.
+    const crowding=clamp((yeast-1)/1,0,1);
+    return .67*(1-.07*crowding)
   }
 
   function initialSugarG(c){
-    // % (w/v): 100 mL 중 g. 표준 반응액 20 mL 기준.
+    // % (w/v): 100 mL 중 g. 반응액은 20 mL.
     return Math.max(0,Number(c.sugar)||0)*VOLUME_ML/100
   }
 
   function glucoseEquivalentMmolAvailable(c){
     const g=initialSugarG(c);
-    if(c.substrate==="glucose"||c.substrate==="fructose") return g/180.156*1000;
-    if(c.substrate==="sucrose") return (g/342.296*1000)*2;
-    // 일반 제빵효모는 전분을 직접 발효할 수 없도록 모델에서 0 처리.
+    if(c.substrate==="glucose"||c.substrate==="fructose"){
+      return g/180.156*1000
+    }
+    if(c.substrate==="sucrose"){
+      // sucrose 1 mol → glucose + fructose, 즉 hexose-equivalent 2 mol
+      return (g/342.296*1000)*2
+    }
     return 0
   }
 
@@ -1769,36 +1826,37 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
   }
 
   function kineticAnchors(c){
-    // 30℃ S. cerevisiae 문헌값을 기준으로 한 앵커.
-    // anaerobic glucose-excess: q_glucose ~13.4, q_CO2 ~21.6, q_ethanol ~19.6 mmol gDW^-1 h^-1
-    // aerobic glucose medium: q_glucose ~10.9, q_CO2 ~12.8, q_ethanol ~17.6, q_O2 ~4.6 mmol gDW^-1 h^-1
     if(c.oxygen==="off"){
+      // anaerobic glucose-excess 문헌값
       return {qGlc:13.4,qCO2:21.6,qEtOH:19.6,qO2:0}
     }
-    return {qGlc:10.9,qCO2:12.8,qEtOH:17.6,qO2:4.6}
+    // aerobic sugar-rich batch의 대표 범위값.
+    // 산소가 있어도 Crabtree effect 때문에 고당에서는 발효가 상당 부분 지속된다.
+    return {qGlc:12.3,qCO2:21.4,qEtOH:19.8,qO2:2.5}
   }
 
   function finalOutcomes(c){
     const yeast=Math.max(0,Number(c.yeast)||0);
+    const sugar=Math.max(0,Number(c.sugar)||0);
+    const temp=Number(c.temp)||0;
     const initialG=initialSugarG(c);
     const availableEq=glucoseEquivalentMmolAvailable(c);
 
-    if(yeast<=0 || initialG<=0 || availableEq<=0){
+    if(yeast<=0 || sugar<=0 || initialG<=0 || availableEq<=0){
       return {
         co2:0,o2:0,ethanol:0,atp:0,atpMmol:0,
         used:0,remaining:100,remainingG:initialG,consumedG:0
       }
     }
 
-    const tf=temperatureFactor(Number(c.temp)||0);
-    const sf=sugarFactor(Number(c.sugar)||0);
+    const tf=temperatureFactor(temp);
+    const sf=sugarFactor(sugar);
     const cf=substrateFactor(c.substrate);
+    const ix=interactionFactor(c);
+    const af=activationFactor(yeast);
     const anchor=kineticAnchors(c);
 
-    // 건조효모의 재수화/초기 적응을 포함한 30분 classroom-scale 보정.
-    // 논문의 활성 배양 세포 속도를 그대로 쓰지 않고 초기 30분에 0.65 배율 적용.
-    const activation=.65;
-    const scale=tf*sf*cf*activation;
+    const scale=tf*sf*cf*ix*af;
     if(scale<=0){
       return {
         co2:0,o2:0,ethanol:0,atp:0,atpMmol:0,
@@ -1806,10 +1864,17 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
       }
     }
 
-    const potentialGlc=anchor.qGlc*yeast*.5*scale; // mmol glucose-equivalent / 30 min
-    const consumedEq=Math.min(potentialGlc,availableEq*.94);
+    // 30분 동안의 잠재 glucose-equivalent 소비량.
+    const potentialGlc=anchor.qGlc*yeast*.5*scale;
+
+    // 실제 기질이 모자라면 즉시 기질 제한.
+    // 고당에서는 삼투 스트레스로 30분 안에 이용 가능한 비율도 약간 낮아지게 한다.
+    const highSugar=clamp((sugar-15)/10,0,1);
+    const maxUsableFraction=.96-.05*highSugar;
+    const consumedEq=Math.min(potentialGlc,availableEq*maxUsableFraction);
     const substrateLimit=potentialGlc>0?consumedEq/potentialGlc:0;
 
+    // 같은 substrateLimit을 모든 생산/소비 항목에 적용해 탄소 흐름을 일관되게 유지.
     const co2Mmol=anchor.qCO2*yeast*.5*scale*substrateLimit;
     const ethanolMmol=anchor.qEtOH*yeast*.5*scale*substrateLimit;
     const o2Mmol=anchor.qO2*yeast*.5*scale*substrateLimit;
@@ -1825,10 +1890,9 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     const remainingG=Math.max(0,initialG-consumedG);
     const usedPct=initialG>0?clamp(consumedG/initialG*100,0,100):0;
 
-    // ATP 환산량:
-    // 발효는 glucose 1 mol당 net 2 ATP.
-    // 산소 공급 시에는 실제 산소 소비량을 이용해 일부 완전산화를 추정하고,
-    // 그 부분은 약 30 ATP/glucose-equivalent로 계산.
+    // ATP 누적 환산값.
+    // 산소 공급 시 관측 O₂ 소비량에 해당하는 부분만 호흡(약 30 ATP/glucose eq),
+    // 나머지는 발효(2 ATP/glucose eq)로 계산한다.
     let respiredEq=0;
     if(c.oxygen==="on") respiredEq=Math.min(consumedEq,o2Mmol/6);
     const fermentativeEq=Math.max(0,consumedEq-respiredEq);
@@ -1852,20 +1916,30 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     const x=clamp(minute/30,0,1);
     if(x<=0)return 0;
 
-    // 건조효모의 재수화/초기 적응: 저온과 매우 높은 당 농도일수록 lag가 길어진다.
     const tf=temperatureFactor(Number(c.temp)||0);
-    const highSugarStress=clamp((Number(c.sugar||0)-15)/10,0,1);
-    const lag=clamp(.035+(1-tf)*.10+highSugarStress*.035,.03,.18);
+    const sugar=Number(c.sugar)||0;
+    const yeast=Math.max(0,Number(c.yeast)||0);
+    const highSugarStress=clamp((sugar-15)/10,0,1);
+    const veryHot=clamp((Number(c.temp||0)-40)/10,0,1);
 
-    // 초기 lag 이후에는 30분 시점에서도 반응속도가 갑자기 0이 되지 않는 준선형 누적곡선.
+    // 초기 적응(lag): 저온/고당/고온스트레스에서 길어지고,
+    // 효모량이 많을수록 육안으로 관찰되는 지연은 조금 짧아진다.
+    const substrateLag=c.substrate==="sucrose"?.012:(c.substrate==="fructose"?.004:0);
+    const biomassLagRelief=.022*clamp(yeast/2,0,1);
+    const lag=clamp(
+      .045+(1-tf)*.105+highSugarStress*.035+veryHot*.04+substrateLag-biomassLagRelief,
+      .022,.22
+    );
+
     const raw=x-lag*(1-Math.exp(-x/lag));
     const rawEnd=1-lag*(1-Math.exp(-1/lag));
     const base=rawEnd>0?clamp(raw/rawEnd,0,1):x;
 
-    // 실제로 기질을 거의 소모하는 조건에서만 후반부 완만한 둔화를 추가한다.
-    const depletion=clamp((Number(fin.used||0)-70)/25,0,1);
-    const saturating=1-Math.pow(1-base,1.8);
-    const blend=depletion*.65;
+    // 기질을 많이 소모하는 조건일수록 후반에 증가속도가 완만해진다.
+    const depletion=clamp((Number(fin.used||0)-58)/35,0,1);
+    const saturating=1-Math.pow(1-base,1.65);
+    const blend=depletion*.62;
+
     return clamp(base*(1-blend)+saturating*blend,0,1)
   }
 
@@ -1873,6 +1947,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     const fin=finalOutcomes(c), arr=[];
     const initialG=initialSugarG(c);
     let prevCo2=0;
+
     for(let minute=0;minute<=30;minute++){
       const shape=cumulativeProgress(c,fin,minute);
       const co2=+(fin.co2*shape).toFixed(2);
@@ -1906,7 +1981,8 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
 
   window.YeastSim={
     substrateName,makeCurve,finalOutcomes,diff,clamp,
-    VOLUME_ML,initialSugarG
+    VOLUME_ML,initialSugarG,
+    modelFactors:{temperatureFactor,sugarFactor,substrateFactor,interactionFactor,activationFactor}
   }
 })();</script>
 <script>(() => {
