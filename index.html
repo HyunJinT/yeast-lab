@@ -1419,7 +1419,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
             </div>
           </div>
 
-          <div id="multiVarWarning" class="warning hidden">여러 조건을 동시에 변경하면 어떤 변인이 결과에 영향을 주었는지 판단하기 어려울 수 있습니다.</div>
+          <div id="multiVarWarning" class="warning hidden">여러 조작변인을 동시에 바꾸어도 모든 조건이 결과 계산에 함께 반영됩니다. 한 변인의 영향만 비교하려면 나머지 조건은 같게 유지하세요.</div>
 
           <div class="reason-row">
             <label for="reasonInput">이번 조건을 선택한 이유 <span>직접 작성</span></label>
@@ -1552,33 +1552,43 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
         <div>
           <span class="step-kicker">BONUS · APPLICATION</span>
           <h1>FERMENTATION CHALLENGE</h1>
-          <p>산소 공급이 없는 조건에서 30분 동안 CO₂를 가장 많이 발생시키는 조건을 설계하세요.</p>
+          <p>유기물·산소·당 농도·온도·효모량을 자유롭게 조절하여 30분 동안 CO₂를 가장 많이 발생시키는 조건을 설계하세요.</p>
         </div>
       </div>
     </div>
     <div class="challenge-layout">
       <section class="glass panel">
         <div class="challenge-rules">
-          <span>고정</span><b>산소 공급 없음 · 효모량 1.0 g · 반응액 20 mL · 실험 30분</b>
+          <span>자유 설정</span><b>유기물 · 산소 · 당 농도 · 온도 · 효모량 모두 조절 가능 · 반응액 20 mL와 실험 30분만 고정</b>
         </div>
         <div class="challenge-once-notice">
           <b>⚠ FINAL CHALLENGE는 모둠당 단 1회만 가능합니다.</b>
           <span>FINAL START를 누르는 순간 조건이 확정되며, 실험이 끝난 뒤 다시 도전할 수 없습니다. 앞선 탐구 결과를 근거로 신중하게 선택하세요.</span>
         </div>
         <div class="challenge-controls">
-          <label>당 종류
+          <label>유기물 종류
             <select id="challengeSubstrate">
               <option value="glucose">포도당</option>
               <option value="sucrose">설탕</option>
               <option value="fructose">과당</option>
               <option value="starch">전분</option>
+              <option value="none">유기물 없음</option>
+            </select>
+          </label>
+          <label>산소 공급
+            <select id="challengeOxygen">
+              <option value="off">공급 없음</option>
+              <option value="on">공급</option>
             </select>
           </label>
           <label>당 농도 <output id="challengeSugarOut">8%</output>
-            <input id="challengeSugar" type="range" min="1" max="25" value="8" />
+            <input id="challengeSugar" type="range" min="0" max="25" step="1" value="8" />
           </label>
           <label>온도 <output id="challengeTempOut">30℃</output>
-            <input id="challengeTemp" type="range" min="10" max="50" value="30" />
+            <input id="challengeTemp" type="range" min="10" max="50" step="1" value="30" />
+          </label>
+          <label>효모량 <output id="challengeYeastOut">1.0 g</output>
+            <input id="challengeYeast" type="range" min="0" max="2" step="0.1" value="1" />
           </label>
           <div id="challengeReasonWrap" class="challenge-reason-wrap">
             <label for="challengeReason">최종 조건 선택 근거</label>
@@ -1722,20 +1732,21 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
   }
 
   function temperatureFactor(t){
-    // 30℃ 부근을 1.0으로 둔 넓은 활성 곡선.
-    // 40℃ 이상에서는 열 스트레스, 10~20℃에서는 반응속도 저하를 반영.
-    return interpolate([[10,.10],[15,.28],[20,.52],[25,.78],[30,1.00],[35,.92],[40,.58],[45,.16],[50,.02]],t)
+    // baker's yeast의 단시간 CO₂ 생성은 25→30→35℃에서 증가하는 실험 경향을 반영.
+    // 40℃ 이상에서는 열 스트레스와 생존율 저하가 커지도록 보정.
+    return interpolate([[10,.08],[15,.22],[20,.45],[25,.72],[30,.92],[35,1.00],[40,.55],[45,.10],[50,.01]],t)
   }
 
   function sugarFactor(s){
-    // 낮은 농도: 기질 제한 / 5~12%: 넓은 고활성 구간 / 15~25%: 고삼투 스트레스 반영.
-    return interpolate([[0,0],[1,.34],[2,.58],[5,.90],[8,1.00],[10,1.00],[12,.97],[15,.90],[20,.77],[25,.62]],s)
+    // 낮은 농도에서는 기질 제한, 8~12%에서는 높은 발효활성,
+    // 약 18%(180 g/L) 이상부터 high-gravity 영역의 고삼투 스트레스가 점차 커지도록 반영.
+    return interpolate([[0,0],[1,.35],[2,.60],[5,.90],[8,.98],[10,1.00],[12,.99],[15,.94],[18,.87],[20,.80],[25,.63]],s)
   }
 
   function substrateFactor(kind){
-    // glucose/sucrose/fructose는 S. cerevisiae가 잘 이용.
-    // fructose는 평균적으로 glucose보다 다소 느리게, starch는 일반 제빵효모가 직접 거의 이용하지 못하도록 처리.
-    return {glucose:1.00,sucrose:.95,fructose:.84,starch:.00,none:.00}[kind] ?? 0
+    // 단일 탄소원으로 제공할 때 glucose와 fructose의 이용속도는 비교적 유사하며,
+    // sucrose도 invertase에 의해 빠르게 가수분해된다. 일반 제빵효모는 전분을 직접 거의 이용하지 못한다.
+    return {glucose:1.00,sucrose:.95,fructose:.96,starch:.00,none:.00}[kind] ?? 0
   }
 
   function initialSugarG(c){
@@ -1837,16 +1848,38 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     }
   }
 
+  function cumulativeProgress(c,fin,minute){
+    const x=clamp(minute/30,0,1);
+    if(x<=0)return 0;
+
+    // 건조효모의 재수화/초기 적응: 저온과 매우 높은 당 농도일수록 lag가 길어진다.
+    const tf=temperatureFactor(Number(c.temp)||0);
+    const highSugarStress=clamp((Number(c.sugar||0)-15)/10,0,1);
+    const lag=clamp(.035+(1-tf)*.10+highSugarStress*.035,.03,.18);
+
+    // 초기 lag 이후에는 30분 시점에서도 반응속도가 갑자기 0이 되지 않는 준선형 누적곡선.
+    const raw=x-lag*(1-Math.exp(-x/lag));
+    const rawEnd=1-lag*(1-Math.exp(-1/lag));
+    const base=rawEnd>0?clamp(raw/rawEnd,0,1):x;
+
+    // 실제로 기질을 거의 소모하는 조건에서만 후반부 완만한 둔화를 추가한다.
+    const depletion=clamp((Number(fin.used||0)-70)/25,0,1);
+    const saturating=1-Math.pow(1-base,1.8);
+    const blend=depletion*.65;
+    return clamp(base*(1-blend)+saturating*blend,0,1)
+  }
+
   function makeCurve(c){
     const fin=finalOutcomes(c), arr=[];
     const initialG=initialSugarG(c);
+    let prevCo2=0;
     for(let minute=0;minute<=30;minute++){
-      const x=minute/30;
-      // 초기 적응 후 증가하는 누적형 곡선
-      const shape=x<=0?0:(x*x*(3-2*x));
+      const shape=cumulativeProgress(c,fin,minute);
+      const co2=+(fin.co2*shape).toFixed(2);
       arr.push({
         minute,
-        co2:+(fin.co2*shape).toFixed(2),
+        co2,
+        co2Rate:+Math.max(0,co2-prevCo2).toFixed(2),
         o2:+(fin.o2*shape).toFixed(2),
         ethanol:+(fin.ethanol*shape).toFixed(3),
         used:+(fin.used*shape).toFixed(1),
@@ -1854,7 +1887,8 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
         remainingG:+Math.max(0,initialG-fin.consumedG*shape).toFixed(3),
         atp:+(fin.atp*shape).toFixed(1),
         atpMmol:+(fin.atpMmol*shape).toFixed(2)
-      })
+      });
+      prevCo2=co2
     }
     return arr
   }
@@ -2755,7 +2789,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     const done=!!state.challenge?.done;
     const controls=$("challengeView")?.querySelector(".challenge-controls");
     const inputs=[
-      $("challengeSubstrate"),$("challengeSugar"),$("challengeTemp"),$("challengeReason")
+      $("challengeSubstrate"),$("challengeOxygen"),$("challengeSugar"),$("challengeTemp"),$("challengeYeast"),$("challengeReason")
     ].filter(Boolean);
     inputs.forEach(el=>el.disabled=attempted);
     if(controls) controls.classList.toggle("locked",attempted);
@@ -2772,11 +2806,14 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     if(attempted){
       const c=state.challenge.conditions||{};
       if($("challengeSubstrate") && c.substrate) $("challengeSubstrate").value=c.substrate;
+      if($("challengeOxygen")) $("challengeOxygen").value=c.oxygen||"off";
       if($("challengeSugar") && c.sugar!=null) $("challengeSugar").value=c.sugar;
       if($("challengeTemp") && c.temp!=null) $("challengeTemp").value=c.temp;
+      if($("challengeYeast")) $("challengeYeast").value=c.yeast!=null?c.yeast:1;
       if($("challengeReason")) $("challengeReason").value=state.challenge.reason||"";
       if($("challengeSugarOut") && c.sugar!=null) $("challengeSugarOut").textContent=c.sugar+"%";
       if($("challengeTempOut") && c.temp!=null) $("challengeTempOut").textContent=c.temp+"℃";
+      if($("challengeYeastOut")) $("challengeYeastOut").textContent=Number(c.yeast!=null?c.yeast:1).toFixed(1)+" g";
       if($("challengeTime")) $("challengeTime").textContent=(state.challenge.minute||0)+" min";
       if($("challengeCO2")) $("challengeCO2").textContent=Number(state.challenge.co2||0).toFixed(1)+" mL";
       if(state.challenge.curve?.length){
@@ -2793,6 +2830,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
   }
   $("challengeSugar").addEventListener("input",()=>$("challengeSugarOut").textContent=$("challengeSugar").value+"%");
   $("challengeTemp").addEventListener("input",()=>$("challengeTempOut").textContent=$("challengeTemp").value+"℃");
+  $("challengeYeast").addEventListener("input",()=>$("challengeYeastOut").textContent=(+$("challengeYeast").value).toFixed(1)+" g");
   $("challengeReason").addEventListener("input",()=>{
     if($("challengeReason").value.trim()){
       $("challengeReasonWrap")?.classList.remove("required-error");
@@ -2826,10 +2864,10 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
 
     const c={
       substrate:$("challengeSubstrate").value,
-      oxygen:"off",
+      oxygen:$("challengeOxygen").value,
       sugar:+$("challengeSugar").value,
       temp:+$("challengeTemp").value,
-      yeast:1
+      yeast:+$("challengeYeast").value
     };
     const curve=YeastSim.makeCurve(c);
 
@@ -2874,7 +2912,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
       if(m>=30){
         clearInterval(t);
         running=false;
-        $("challengeResult").innerHTML=`FINAL CHALLENGE 완료 · 최종 CO₂ <b>${p.co2.toFixed(1)} mL</b> · ${YeastSim.substrateName[c.substrate]} ${c.sugar}% · ${c.temp}℃ · 다시 도전할 수 없습니다.`;
+        $("challengeResult").innerHTML=`FINAL CHALLENGE 완료 · 최종 CO₂ <b>${p.co2.toFixed(1)} mL</b> · ${YeastSim.substrateName[c.substrate]} · ${c.oxygen==="on"?"산소 공급":"산소 없음"} · 당 ${c.sugar}% · ${c.temp}℃ · 효모 ${Number(c.yeast).toFixed(1)} g · 다시 도전할 수 없습니다.`;
         save();
         updateChallengeAttemptUI();
       }
@@ -3022,9 +3060,11 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
         </div>
         <div class="arena-members">${esc(g.members||"")}</div>
         <div class="arena-cond">
-          <span>${c.substrate?YeastSimName(c.substrate):"당 미정"}</span>
+          <span>${c.substrate?YeastSimName(c.substrate):"유기물 미정"}</span>
+          <span>${c.oxygen==="on"?"산소 공급":c.oxygen==="off"?"산소 없음":"산소 미정"}</span>
           <span>${c.sugar!=null?`당 ${c.sugar}%`:"농도 미정"}</span>
           <span>${c.temp!=null?`${c.temp}℃`:"온도 미정"}</span>
+          <span>${c.yeast!=null?`효모 ${Number(c.yeast).toFixed(1)}g`:"효모량 미정"}</span>
         </div>
         <div class="arena-values">
           <b>${co2.toFixed(1)} mL CO₂</b>
@@ -3058,7 +3098,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
       const reason=challengeMode?(liveChallenge?.reason||"FINAL START 대기"):(g.current?.reason||g.experiments?.at(-1)?.reason||"");
       return `<article class="group-card" data-key="${esc(g.key)}"><div class="group-title"><h3>${esc(g.classId)}반 · ${esc(g.group)}</h3><div class="group-card-actions"><span class="stage-tag">${stageName(g.stage)}</span><button type="button" class="group-delete-btn" data-delete-key="${esc(g.key)}" title="이 모둠 데이터 삭제">삭제</button></div></div>
       <div class="group-meta">${esc(g.members)} · 실험 ${g.experiments?.length||0}회 · ${timeAgo(g.updatedAt)}</div>
-      <div class="group-conditions"><span>${YeastSimName(c.substrate)}</span><span>${c.oxygen==="on"?"산소 공급":"산소 공급 없음"}</span><span>${c.sugar??"-"}%</span><span>${c.temp??"-"}℃</span></div>
+      <div class="group-conditions"><span>${YeastSimName(c.substrate)}</span><span>${c.oxygen==="on"?"산소 공급":"산소 공급 없음"}</span><span>${c.sugar??"-"}%</span><span>${c.temp??"-"}℃</span><span>효모 ${c.yeast!=null?Number(c.yeast).toFixed(1):"-"}g</span></div>
       <canvas class="mini-canvas" width="360" height="100" data-curve="${esc(g.key)}"></canvas>
       <div class="typing-preview">현재 ${minute}/30 min · CO₂ ${Number(co2).toFixed(1)} mL · “${esc(reason)}”</div></article>`
     }).join("");
