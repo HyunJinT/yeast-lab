@@ -785,7 +785,7 @@ body.single-file .topbar{position:sticky;top:0}
 .arena-card.waiting .arena-status{background:#2d2918;color:#e4ce83}
 .arena-members{color:#7fa1b2;font-size:9px;margin-bottom:7px}
 .arena-cond{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:7px
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(68px,1fr));gap:4px;margin-bottom:7px
 }
 .arena-cond span{
   background:#0c2232;border-radius:6px;padding:4px 5px;font-size:9px;color:#c2d6df;text-align:center
@@ -1734,7 +1734,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
   function temperatureFactor(t){
     // baker's yeast의 단시간 CO₂ 생성은 25→30→35℃에서 증가하는 실험 경향을 반영.
     // 40℃ 이상에서는 열 스트레스와 생존율 저하가 커지도록 보정.
-    return interpolate([[10,.08],[15,.22],[20,.45],[25,.72],[30,.92],[35,1.00],[40,.55],[45,.10],[50,.01]],t)
+    return interpolate([[10,.09],[15,.24],[20,.49],[25,.78],[30,1.00],[35,1.08],[40,.60],[45,.11],[50,.01]],t)
   }
 
   function sugarFactor(s){
@@ -2517,7 +2517,8 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
         suspension.style.opacity=String(turbidity);
       }
     }
-    bubble(p.co2/170);
+    // 기포는 누적 CO₂량이 아니라 직전 1분 동안의 CO₂ 생성량에 비례해 표시.
+    bubble(Math.min(1.5,(p.co2Rate||0)/6));
   }
   function updateGraph(progress={}){
     YeastCharts.drawSeries($("mainGraph"),state.experiments,progress)
@@ -2820,7 +2821,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
         YeastCharts.drawSeries($("challengeGraph"),[{id:"c",curve:state.challenge.curve,color:"#26d9c7"}]);
       }
       if(done){
-        $("challengeResult").innerHTML=`최종 도전 완료 · CO₂ <b>${Number(state.challenge.co2||0).toFixed(1)} mL</b> · 다시 도전할 수 없습니다.`;
+        $("challengeResult").innerHTML=`최종 도전 완료 · CO₂ <b>${Number(state.challenge.co2||0).toFixed(1)} mL</b> · ${YeastSim.substrateName[c.substrate]||"유기물"} · ${c.oxygen==="on"?"산소 공급":"산소 없음"} · 당 ${c.sugar??"-"}% · ${c.temp??"-"}℃ · 효모 ${Number(c.yeast!=null?c.yeast:1).toFixed(1)} g · 다시 도전할 수 없습니다.`;
       }else{
         $("challengeResult").textContent="FINAL CHALLENGE가 진행 중입니다. 이 도전은 1회만 가능합니다.";
       }
@@ -3077,7 +3078,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
 
     challengeGroups.forEach(g=>{
       const canvas=document.querySelector(`canvas[data-arena-curve="${CSS.escape(g.key)}"]`);
-      const curve=g.challenge?.curve||[];
+      const curve=liveChallengeSnapshot(g)?.curve||[];
       YeastCharts.drawMini(canvas,curve,"#26d9c7")
     })
   }
