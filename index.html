@@ -1995,7 +1995,16 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
   async function subscribeControlCloud(fn){
     await cloudPromise;if(!cloudReady)return()=>{};
     return cloud.onValue(cloud.ref(cloud.db,"controls"),snap=>{
-      const v=snap.val()||{};Object.values(v).forEach(fn)
+      const v=snap.val()||{};
+      Object.values(v).forEach(payload=>{
+        if(!payload?.classId)return;
+        // 다른 컴퓨터에서 변경된 교사 제어값도 이 기기의 로컬 캐시에 즉시 반영한다.
+        // 그래야 학생이 FINAL CHALLENGE 버튼을 누를 때 refreshChallengeGate()가
+        // 최신 Firebase 상태를 그대로 읽어 다시 잠그지 않는다.
+        safeStorage.set("yeast:control:"+safeKey(payload.classId),JSON.stringify(payload));
+        controlListeners.forEach(localFn=>localFn(payload));
+        fn(payload)
+      })
     })
   }
   window.YeastCloud={
