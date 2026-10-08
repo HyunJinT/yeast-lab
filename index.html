@@ -1182,6 +1182,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     <h2 id="teacherPasswordTitle">교사용 대시보드</h2>
     <p><strong>초미녀 현진쌤만 이용 가능합니다!</strong><br>비밀번호를 입력하세요.</p>
     <div class="teacher-password-hint">힌트: 대문자+소문자+특수기호의 비밀번호를 입력하세요!</div>
+    <input id="teacherEmail" type="email" autocomplete="username" placeholder="교사용 이메일" aria-label="교사용 이메일" />
     <input id="teacherPassword" type="password" autocomplete="current-password" placeholder="비밀번호" />
     <button id="teacherLoginBtn" class="primary-btn full" type="button">접속</button>
     <p id="teacherLoginMessage" class="form-error" aria-live="polite"></p>
@@ -1998,17 +1999,43 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     const cfg=window.YEAST_FIREBASE_CONFIG;
     if(!cfg||!cfg.databaseURL) return false;
     try{
-      const [{initializeApp},{getAuth,signInAnonymously},{getDatabase,ref,set,onValue}] = await Promise.all([
+      const [{initializeApp},{getAuth,signInAnonymously,signInWithEmailAndPassword,signOut},{getDatabase,ref,set,onValue}] = await Promise.all([
         import("https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js"),
         import("https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js"),
         import("https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js")
       ]);
       const app=initializeApp(cfg), auth=getAuth(app); await signInAnonymously(auth);
       const db=getDatabase(app);
-      cloud={db,ref,set,onValue}; cloudReady=true; return true
+      cloud={db,ref,set,onValue,auth,signInAnonymously,signInWithEmailAndPassword,signOut}; cloudReady=true; return true
     }catch(err){cloudErrorCode=err?.code||"";cloudError=err?.message||String(err);console.warn("Firebase disabled:",err);return false}
   }
   const cloudPromise=initCloud();
+  // Configure a single approved Firebase Authentication UID after creating the teacher account.
+  // A public UID is not a secret; authorization must also be enforced by Firebase rules.
+  const APPROVED_TEACHER_UID="SET_TEACHER_FIREBASE_UID_BEFORE_DEPLOY";
+  async function loginTeacher(email,password){
+    await cloudPromise;
+    if(!cloudReady)throw new Error("Firebase 연결을 확인하세요.");
+    if(APPROVED_TEACHER_UID.startsWith("SET_"))throw new Error("교사 계정 UID 설정이 아직 완료되지 않았습니다.");
+    let credential;
+    try{
+      credential=await cloud.signInWithEmailAndPassword(cloud.auth,email,password);
+      if(credential.user.uid!==APPROVED_TEACHER_UID)throw new Error("승인된 교사 계정이 아닙니다.");
+      return true;
+    }catch(err){
+      await cloud.signOut(cloud.auth).catch(()=>{});
+      await cloud.signInAnonymously(cloud.auth).catch(()=>{});
+      throw err;
+    }
+  }
+  async function logoutTeacher(){
+    await cloudPromise;
+    if(!cloudReady)return;
+    await cloud.signOut(cloud.auth);
+    await cloud.signInAnonymously(cloud.auth);
+  }
+  function isTeacher(){return cloudReady && cloud.auth.currentUser?.uid===APPROVED_TEACHER_UID;}
+
   function safeKey(s){return String(s||"group").replace(/[.#$/\[\]]/g,"_").slice(0,80)}
   async function publish(payload){
     safeStorage.set("yeast:last:"+payload.key,JSON.stringify(payload));
@@ -2080,6 +2107,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
   window.YeastCloud={
     publish,subscribeLocal,subscribeCloud,localSnapshot,deleteGroup,
     controlSnapshot,publishControl,subscribeControlLocal,subscribeControlCloud,
+    loginTeacher,logoutTeacher,isTeacher,
     isCloud:()=>cloudReady,
     status:()=>cloudReady?"연결됨":(cloudError?"연결안됨":"연결 중"),
     error:()=>cloudError,
@@ -2128,7 +2156,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
 
   function requestTeacherAccess(){
     const msg=document.getElementById('teacherLoginMessage');
-    const input=document.getElementById('teacherPassword');
+    const input=document.getElementById('teacherEmail');
     if(msg) msg.textContent='';
     if(input) input.value='';
     teacherModal?.classList.remove('hidden');
@@ -2140,6 +2168,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     teacherModal?.classList.add('hidden');
     teacherModal?.setAttribute('aria-hidden','true');
     document.getElementById('teacherPassword').value='';
+    document.getElementById('teacherEmail').value='';
     document.getElementById('teacherLoginMessage').textContent='';
   }
 
@@ -2994,21 +3023,24 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
 })();</script>
 <script>(() => {
   const $=id=>document.getElementById(id), views=[...document.querySelectorAll("#teacherContainer .view")];
-  const TEACHER_SALT="ylab-teacher-v1::", TEACHER_HASH="17372d957ddbfa9704757d270b2867d465e5526640b8ee60a2b762a9cd9d4e75";
+  // Teacher login uses Firebase Authentication, not a password embedded in the page.
   let groups=new Map(),filter="ALL",cloudUnsub=null,controlCloudUnsub=null,teacherTicker=null,challengeControls={B:false,C:false,D:false};
   function show(id){views.forEach(v=>v.classList.toggle("active",v.id===id))}
-  async function sha256(text){const buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(text));return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("")}
+
   $("teacherLoginBtn").addEventListener("click",async()=>{
-    const input=$("teacherPassword").value;
-    if(await sha256(TEACHER_SALT+input)===TEACHER_HASH){
+    const btn=$("teacherLoginBtn");
+    btn.disabled=true;
+    $("teacherLoginMessage").textContent="교사 계정 확인 중...";
+    try{
+      await YeastCloud.loginTeacher($("teacherEmail").value.trim(),$("teacherPassword").value);
       $("teacherLoginMessage").textContent="";
-      window.YeastNav?.openTeacherDashboard();
-      startMonitor()
-    }else{
-      $("teacherLoginMessage").textContent="비밀번호가 올바르지 않습니다.";
       $("teacherPassword").value="";
-      $("teacherPassword").focus()
-    }
+      window.YeastNav?.openTeacherDashboard();
+      await startMonitor();
+    }catch(err){
+      $("teacherLoginMessage").textContent=err?.message||"교사 인증에 실패했습니다.";
+      $("teacherPassword").value="";
+    }finally{btn.disabled=false}
   });
   $("teacherPassword").addEventListener("keydown",e=>{
     if(e.key==="Enter")$("teacherLoginBtn").click()
@@ -3019,6 +3051,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     cloudUnsub=null;
     controlCloudUnsub=null;
     if(teacherTicker){clearInterval(teacherTicker);teacherTicker=null}
+    YeastCloud.logoutTeacher().catch(console.warn);
     window.YeastNav?.home()
   });
   document.querySelectorAll("#classTabs button").forEach(b=>b.addEventListener("click",()=>{
