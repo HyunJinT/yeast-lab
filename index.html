@@ -1372,7 +1372,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
           <div><span>당 잔량 추정</span><div class="meter"><i id="substrateMeter"></i></div><b id="substrateLive">0.00 g</b></div>
           <div><span>ATP 생성 환산량*</span><div class="meter"><i id="atpMeter"></i></div><b id="atpLive">0.0 mmol</b></div>
         </div>
-        <p class="relative-index-note">※ CO₂·O₂·에탄올·당 잔량은 문헌의 S. cerevisiae 대사속도·수율 범위를 이용한 추정값입니다. *ATP는 대사경로의 이론적 ATP 수율을 적용한 누적 환산값이며, 세포 안에 저장된 ATP 농도가 아닙니다.</p>
+        <p class="relative-index-note">※ CO₂·O₂·에탄올·당 잔량은 문헌의 S. cerevisiae 대사속도를 바탕으로 한 교육용 추정값입니다. 산소 공급 시에도 발효를 병행할 수 있으며, 산소는 30분 동안 계속 공급되는 것으로 가정합니다. *ATP는 이론적 수율에 따른 누적 환산값으로, 세포 안에 저장된 ATP 농도가 아닙니다.</p>
       </section>
 
       <section class="glass panel graph-controls-panel">
@@ -1719,9 +1719,10 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
   // 5) 같은 조건은 같은 결과가 나오도록 무작위 오차는 넣지 않는다.
   //
   // 참고 범위
-  // - anaerobic glucose excess: qGlc≈13.4, qCO2≈21.6, qEtOH≈19.6 mmol gDW⁻¹ h⁻¹
-  // - aerobic sugar-rich batch: qGlc≈12.3, qCO2≈21.4, qEtOH≈19.8, qO2≈2.5
-  //   (S. cerevisiae는 Crabtree-positive라 산소가 있어도 고당에서는 발효가 계속된다.)
+  // - 무산소 대표 관측값: qGlc≈13.4, qCO₂≈21.6 mmol gDW⁻¹ h⁻¹
+  // - 유산소 배양 대표 범위: qGlc≈12~13, qCO₂≈20~23, qO₂≈2~3
+  // - 관측값 자체를 복사한 것이 아니라 발효(2 CO₂)·호흡(6 CO₂)의 물질수지를
+  //   만족시키도록 보정한 교육용 추정값이다. 산소 공급 시에도 발효가 병행된다.
   // ─────────────────────────────────────────────────────────────
 
   const VOLUME_ML=20;
@@ -1820,13 +1821,17 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
   }
 
   function kineticAnchors(c){
+    // 서로 다른 실험에서 얻은 대표 대사속도 범위를 교육용으로 보정한 모델이다.
+    // qGlc, qO2: mmol / g(건조 효모) / h.
+    // catabolicShare는 30분 동안 소비된 육탄당 중 CO₂·에탄올 생성에
+    // 기여하는 분율이며, 나머지는 생체물질/글리세롤 등으로 향한다고 가정한다.
     if(c.oxygen==="off"){
-      // anaerobic glucose-excess 문헌값
-      return {qGlc:13.4,qCO2:21.6,qEtOH:19.6,qO2:0}
+      // 무산소 포도당 과잉 조건: qGlc≈13.4, qCO2≈21.6 관측 범위에 보정.
+      return {qGlc:13.4,qO2:0,catabolicShare:.80}
     }
-    // aerobic sugar-rich batch의 대표 범위값.
-    // 산소가 있어도 Crabtree effect 때문에 고당에서는 발효가 상당 부분 지속된다.
-    return {qGlc:12.3,qCO2:21.4,qEtOH:19.8,qO2:2.5}
+    // 산소 지속 공급 + 당이 풍부한 배양: qGlc≈12~13, qO2≈2~3,
+    // qCO2≈20~23의 문헌 범위. 산소가 있어도 알코올 발효를 병행한다.
+    return {qGlc:12.3,qO2:2.5,catabolicShare:.82}
   }
 
   function finalOutcomes(c){
@@ -1868,10 +1873,18 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     const consumedEq=Math.min(potentialGlc,availableEq*maxUsableFraction);
     const substrateLimit=potentialGlc>0?consumedEq/potentialGlc:0;
 
-    // 같은 substrateLimit을 모든 생산/소비 항목에 적용해 탄소 흐름을 일관되게 유지.
-    const co2Mmol=anchor.qCO2*yeast*.5*scale*substrateLimit;
-    const ethanolMmol=anchor.qEtOH*yeast*.5*scale*substrateLimit;
-    const o2Mmol=anchor.qO2*yeast*.5*scale*substrateLimit;
+    // 호흡/발효를 독립적인 CO₂ 숫자로 정하지 않고 반응식에 따라 합산.
+    // 육탄당 1 mmol 발효: CO₂ 2 mmol, 에탄올 2 mmol, ATP 2 mmol.
+    // 육탄당 1 mmol 완전 호흡: O₂ 6 mmol, CO₂ 6 mmol, ATP 약 30 mmol.
+    // 산소 공급 조건에서도 크랩트리 효과 때문에 발효가 병행된다.
+    const catabolizedEq=consumedEq*anchor.catabolicShare;
+    const oxygenCapacity=anchor.qO2*yeast*.5*scale*substrateLimit;
+    const o2Mmol=c.oxygen==="on"
+      ? Math.min(oxygenCapacity,catabolizedEq*6) : 0;
+    const respiredEq=o2Mmol/6;
+    const fermentativeEq=Math.max(0,catabolizedEq-respiredEq);
+    const co2Mmol=2*fermentativeEq+6*respiredEq;
+    const ethanolMmol=2*fermentativeEq;
 
     const co2Ml=co2Mmol*GAS_ML_PER_MMOL;
     const o2Ml=o2Mmol*GAS_ML_PER_MMOL;
@@ -1884,12 +1897,8 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     const remainingG=Math.max(0,initialG-consumedG);
     const usedPct=initialG>0?clamp(consumedG/initialG*100,0,100):0;
 
-    // ATP 누적 환산값.
-    // 산소 공급 시 관측 O₂ 소비량에 해당하는 부분만 호흡(약 30 ATP/glucose eq),
-    // 나머지는 발효(2 ATP/glucose eq)로 계산한다.
-    let respiredEq=0;
-    if(c.oxygen==="on") respiredEq=Math.min(consumedEq,o2Mmol/6);
-    const fermentativeEq=Math.max(0,consumedEq-respiredEq);
+    // CO₂와 동일한 호흡/발효 분할량으로 ATP도 계산한다.
+    // 소비된 당 전량이 아니라, 생체물질 등으로 가지 않은 분해 기질을 이용한다.
     const atpMmol=fermentativeEq*2 + respiredEq*30;
     const atpMeter=clamp(atpMmol/40*100,0,100);
 
