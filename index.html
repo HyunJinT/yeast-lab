@@ -1224,12 +1224,6 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
           <div id="groupInlineError" class="required-inline-error hidden">모둠명을 입력하세요.</div>
         </div>
 
-        <div id="membersFieldWrap" class="join-field-wrap">
-          <label for="memberNames">학생 이름</label>
-          <input id="memberNames" maxlength="80" placeholder="예: 박은행, 김효모, 이ATP" />
-          <div id="membersInlineError" class="required-inline-error hidden">참여 학생 이름을 입력하세요.</div>
-        </div>
-
         <button id="joinBtn" class="primary-btn full" type="button">실험실 입장</button>
         <p id="joinError" class="form-error" aria-live="polite"></p>
       </div>
@@ -2213,7 +2207,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     set(k,v){try{localStorage.setItem(k,v)}catch(e){}},
     remove(k){try{localStorage.removeItem(k)}catch(e){}}
   };
-  const defaults={classId:"",group:"",members:"",stage:"join",hypothesis:"",experiments:[],reflection:{},challenge:null,current:null};
+  const defaults={classId:"",group:"",stage:"join",hypothesis:"",experiments:[],reflection:{},challenge:null,current:null};
   let state={...defaults}; let running=false, timer=null, challengeUnlocked=false, warningFocusId=null;
   window.YeastStudentReset=async function(){
     try{if(timer)clearInterval(timer)}catch(e){}
@@ -2234,6 +2228,8 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     D:"https://b.tkbell.co.kr/tkboard/woi/1192365/qq8lp1yFTu.do?pageSeq=2526607"
   };
   try{state={...defaults,...JSON.parse(safeStorage.get(stateKey)||"{}")}}catch{}
+  delete state.members;
+  safeStorage.set(stateKey,JSON.stringify(state));
   state.reflection=state.reflection||{};
   if(!Array.isArray(state.reflection.selectedExperimentIds)) state.reflection.selectedExperimentIds=[];
   function save(){safeStorage.set(stateKey,JSON.stringify(state)); sync()}
@@ -2324,7 +2320,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     if(!state.classId||!state.group)return;
     const last=state.experiments[state.experiments.length-1];
     YeastCloud.publish({
-      key:key(),classId:state.classId,group:state.group,members:state.members,stage:state.stage,
+      key:key(),classId:state.classId,group:state.group,stage:state.stage,
       current:state.current,hypothesis:state.hypothesis,experiments:state.experiments,reflection:state.reflection,challenge:state.challenge,
       latestCurve:last?.curve||[],updatedAt:Date.now(),...extra
     })
@@ -2396,7 +2392,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
   }
   function restore(){
     if(state.classId) document.querySelector(`[data-class="${state.classId}"]`)?.classList.add("active");
-    $("groupName").value=state.group||"";$("memberNames").value=state.members||"";
+    $("groupName").value=state.group||"";
     $("studentIdentity").textContent=state.classId?`${state.classId}반 · ${state.group}`:"미입장";
     if(state.classId&&state.group&&state.stage!=="join") show((state.stage||"lab")+"View"); else show("joinView");
     renderLog();updateGraph();refreshChallengeGate();updateHypothesisUI();updateThinkerBell();updateChallengeAttemptUI()
@@ -2418,20 +2414,12 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
       $("joinError").textContent="";
     }
   });
-  $("memberNames").addEventListener("input",()=>{
-    if($("memberNames").value.trim()){
-      $("membersFieldWrap")?.classList.remove("required-error");
-      $("membersInlineError")?.classList.add("hidden");
-      $("joinError").textContent="";
-    }
-  });
   $("joinBtn").addEventListener("click",()=>{
     state.group=$("groupName").value.trim();
-    state.members=$("memberNames").value.trim();
 
     // 이전 오류 표시 초기화
-    ["classFieldWrap","groupFieldWrap","membersFieldWrap"].forEach(id=>$(id)?.classList.remove("required-error"));
-    ["classInlineError","groupInlineError","membersInlineError"].forEach(id=>$(id)?.classList.add("hidden"));
+    ["classFieldWrap","groupFieldWrap"].forEach(id=>$(id)?.classList.remove("required-error"));
+    ["classInlineError","groupInlineError"].forEach(id=>$(id)?.classList.add("hidden"));
 
     const missing=[];
     if(!state.classId){
@@ -2444,15 +2432,10 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
       $("groupFieldWrap")?.classList.add("required-error");
       $("groupInlineError")?.classList.remove("hidden");
     }
-    if(!state.members){
-      missing.push("학생 이름");
-      $("membersFieldWrap")?.classList.add("required-error");
-      $("membersInlineError")?.classList.remove("hidden");
-    }
 
     if(missing.length){
       $("joinError").textContent="빨간색으로 표시된 필수 항목을 모두 입력하세요.";
-      const firstFocus=!state.classId?null:(!state.group?"groupName":"memberNames");
+      const firstFocus=!state.classId?null:(!state.group?"groupName":null);
       showWarning(`실험실 입장에 필요한 정보가 비어 있습니다.\n${missing.join(" · ")}을(를) 확인하세요.`,firstFocus);
 
       if(!state.classId){
@@ -2799,7 +2782,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     const chosen=selectedExperiments();
 
     $("posterTitle").textContent=`${state.group} 연구 결과`;
-    $("posterIdentity").innerHTML=`${state.classId}반<br>${escapeHtml(state.members)}`;
+    $("posterIdentity").innerHTML=`${state.classId}반<br>${escapeHtml(state.group)}`;
     $("posterHypothesis").textContent=state.hypothesis||"";
     $("posterKey").textContent=state.reflection.keyResult||"";
     $("posterUnexpected").textContent=state.reflection.unexpected||"";
@@ -3144,7 +3127,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
           <h3>${esc(g.classId)}반 · ${esc(g.group)}</h3>
           <span class="arena-status">${status}</span>
         </div>
-        <div class="arena-members">${esc(g.members||"")}</div>
+        
         <div class="arena-cond">
           <span>${c.substrate?YeastSimName(c.substrate):"유기물 미정"}</span>
           <span>${c.oxygen==="on"?"산소 공급":c.oxygen==="off"?"산소 없음":"산소 미정"}</span>
@@ -3183,7 +3166,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
       const minute=challengeMode?(liveChallenge?.minute??0):(g.current?.minute??0);
       const reason=challengeMode?(liveChallenge?.reason||"FINAL START 대기"):(g.current?.reason||g.experiments?.at(-1)?.reason||"");
       return `<article class="group-card" data-key="${esc(g.key)}"><div class="group-title"><h3>${esc(g.classId)}반 · ${esc(g.group)}</h3><div class="group-card-actions"><span class="stage-tag">${stageName(g.stage)}</span><button type="button" class="group-delete-btn" data-delete-key="${esc(g.key)}" title="이 모둠 데이터 삭제">삭제</button></div></div>
-      <div class="group-meta">${esc(g.members)} · 실험 ${g.experiments?.length||0}회 · ${timeAgo(g.updatedAt)}</div>
+      <div class="group-meta">실험 ${g.experiments?.length||0}회 · ${timeAgo(g.updatedAt)}</div>
       <div class="group-conditions"><span>${YeastSimName(c.substrate)}</span><span>${c.oxygen==="on"?"산소 공급":"산소 공급 없음"}</span><span>${c.sugar??"-"}%</span><span>${c.temp??"-"}℃</span><span>효모 ${c.yeast!=null?Number(c.yeast).toFixed(1):"-"}g</span></div>
       <canvas class="mini-canvas" width="360" height="100" data-curve="${esc(g.key)}"></canvas>
       <div class="typing-preview">현재 ${minute}/30 min · CO₂ ${Number(co2).toFixed(1)} mL · “${esc(reason)}”</div></article>`
@@ -3214,7 +3197,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     const liveChallenge=challengeMode?liveChallengeSnapshot(g):null;
     const c=challengeMode?(liveChallenge?.conditions||{}):(g.current?.conditions||{});
     const currentText=challengeMode?(liveChallenge?.reason||""):(g.current?.reason||"");
-    $("groupDetail").innerHTML=`<span class="step-kicker">${esc(g.classId)} CLASS · GROUP DETAIL</span><h2>${esc(g.group)}</h2><p>${esc(g.members)}</p>
+    $("groupDetail").innerHTML=`<span class="step-kicker">${esc(g.classId)} CLASS · GROUP DETAIL</span><h2>${esc(g.group)}</h2>
       <div class="detail-grid"><section><h3>현재 상태</h3><p>${stageName(g.stage)} · ${challengeMode?(liveChallenge?.minute??0):(g.current?.minute??0)}/30 min</p><p>${formatConditions(c)}</p><p><b>작성 중:</b> ${esc(currentText)}</p>
       <canvas id="detailGraph" width="720" height="330" style="width:100%;background:#06141f;border-radius:10px"></canvas></section>
       <section><h3>실험 기록</h3>${(g.experiments||[]).map((e,i)=>{const f=e.curve?.at(-1)||{};return `<div class="detail-experiment" style="--card-color:${e.color||"#38bdf8"}"><b>실험 ${i+1}</b><br>${formatConditions(e.conditions)}<br>CO₂ ${Number(f.co2||0).toFixed(1)}mL · 에탄올 ${Number(f.ethanol||0).toFixed(2)}% · O₂ 소비 ${Number(f.o2||0).toFixed(1)}mL · ATP 환산 ${Number(f.atpMmol||0).toFixed(1)}mmol<br>이유: ${esc(e.reason)}</div>`}).join("")||"아직 기록 없음"}</section></div>
