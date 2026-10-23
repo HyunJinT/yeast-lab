@@ -2174,10 +2174,24 @@ window.YEAST_FIREBASE_CONFIG = {
         queue.latest=null;
         try{
           await cloud.set(cloud.ref(cloud.db,path),next);
+          const badge=document.getElementById("studentCloudStatus");
+          if(badge && badge.textContent==="동기화 오류"){
+            badge.classList.remove("error","connecting");
+            badge.classList.add("online");
+            badge.textContent="연결됨";
+            badge.title="";
+          }
         }catch(err){
           console.warn("Group sync failed:",err);
           cloudError=err?.message||String(err);
           cloudErrorCode=err?.code||"database/write-failed";
+          const badge=document.getElementById("studentCloudStatus");
+          if(badge){
+            badge.classList.remove("online","connecting");
+            badge.classList.add("error");
+            badge.textContent="동기화 오류";
+            badge.title=cloudError;
+          }
           // Drop failed snapshot until next student action; no busy retry loop.
           queue.latest=null;
           break;
@@ -3403,6 +3417,8 @@ window.YEAST_FIREBASE_CONFIG = {
       scheduleTeacherRender();
       return
     }
+    const previous=groups.get(p.key);
+    if(previous && Number(previous.updatedAt||0)>Number(p.updatedAt||0))return;
     groups.set(p.key,p);
     scheduleTeacherRender()
   }
