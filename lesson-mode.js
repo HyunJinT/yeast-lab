@@ -29,7 +29,14 @@ body.lesson-tutorial #runBtn{min-width:160px}
 .lesson-teacher-panel{margin:14px 0 22px;padding:20px;border:1px solid #36697b;border-radius:18px;background:rgba(19,77,96,.24)}
 .lesson-teacher-panel h2{margin:0 0 8px}
 .lesson-teacher-panel>p{color:#b6d4df;line-height:1.65;font-size:.92rem}
-.lesson-teacher-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.lesson-teacher-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.lesson-teacher-card[hidden]{display:none!important}
+.lesson-teacher-grid.single-class{grid-template-columns:minmax(0,1fr)}
+.lesson-teacher-grid.single-class .lesson-stage-buttons{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.lesson-teacher-grid.single-class .lesson-teacher-toggle{min-height:66px}
+.lesson-stage-buttons{display:grid;gap:4px}
+.lesson-teacher-card h3{font-size:1.15rem}
+.lesson-teacher-toggle{transition:background .15s,border-color .15s}
 .lesson-teacher-card{padding:16px;border:1px solid #3b6b7a;border-radius:13px;background:rgba(7,29,43,.44)}
 .lesson-teacher-card h3{margin:0 0 12px;font-size:1.1rem}
 .lesson-teacher-card p{font-size:.8rem;line-height:1.5;color:#a3c8d5;margin:10px 0}
@@ -37,6 +44,11 @@ body.lesson-tutorial #runBtn{min-width:160px}
 .lesson-teacher-toggle span{display:block;font-size:.8rem;font-weight:500}
 .lesson-teacher-toggle.enabled{background:rgba(21,132,111,.3);border-color:#51c9a8;color:#acffe4}
 .lesson-teacher-toggle:disabled{opacity:.45;cursor:wait}
+#lessonTeacherPanel .challenge-toggle{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:6px;text-align:left}
+#lessonTeacherPanel .challenge-toggle>span{font-size:.9rem;font-weight:700}
+#lessonTeacherPanel .challenge-toggle>strong{font-size:.86rem;font-weight:800}
+#lessonTeacherPanel .lesson-teacher-card>p{margin:8px 0 0}
+@media(max-width:900px){.lesson-teacher-grid.single-class .lesson-stage-buttons{grid-template-columns:1fr}}
 @media(max-width:720px){#inquiryGateBtn{padding:8px 9px;font-size:11px}.lesson-wait-card{padding:20px}.lesson-teacher-panel{padding:13px}}
 `;
   document.head.appendChild(styles);
@@ -48,14 +60,27 @@ body.lesson-tutorial #runBtn{min-width:160px}
     panel.id="lessonTeacherPanel";
     panel.className="lesson-teacher-panel";
     panel.innerHTML='<h2>반별 수업 진행 제어</h2>'+
-      '<p>① 학생들이 반·모둠명 입력 후 대기합니다. ② 해당 반의 튜토리얼을 열면 학생의 <b>실험하러 가기</b> 버튼이 활성화됩니다. ③ 이후 <b>탐구 실행하기</b>를 활성화하면 학생이 가설 작성부터 자유탐구를 시작할 수 있습니다. 단계는 반별로 독립적으로 제어됩니다.</p>'+
-      '<div class="lesson-teacher-grid">'+classes.map(cls=>
-        '<section class="lesson-teacher-card"><h3>'+cls+'반</h3>'+
+      '<p>선택한 학급의 진행 단계를 개별 제어합니다. 버튼을 누르면 학생 화면에 실시간 반영됩니다.</p>'+
+      '<div class="lesson-teacher-grid" id="lessonTeacherGrid">'+classes.map(cls=>
+        '<section class="lesson-teacher-card" data-teacher-class="'+cls+'"><h3>'+(window.YeastClassLabel?.(cls)||cls+"반")+'</h3>'+
+        '<div class="lesson-stage-buttons">'+
         '<button type="button" class="lesson-teacher-toggle" data-classroom="'+cls+'" data-field="tutorialOpen"></button>'+
         '<button type="button" class="lesson-teacher-toggle" data-classroom="'+cls+'" data-field="inquiryEnabled"></button>'+
-        '<p>두 항목은 실시간으로 학생 화면에 적용됩니다. 이미 진행 중인 실험은 완료 후 다음 단계로 이동할 수 있습니다.</p></section>'
+        '<div data-challenge-slot="'+cls+'"></div>'+
+        '</div></section>'
       ).join("")+'</div>';
     anchor.insertAdjacentElement("afterend",panel);
+    // Move original final-challenge controls, preserving their existing event listeners.
+    classes.forEach(cls=>{
+      const button=document.querySelector('.challenge-toggle[data-challenge-class="'+cls+'"]');
+      const slot=panel.querySelector('[data-challenge-slot="'+cls+'"]');
+      if(!button||!slot)return;
+      button.classList.add("lesson-teacher-toggle");
+      button.querySelector("span").textContent="3. 최종 게임 챌린지";
+      slot.replaceWith(button);
+    });
+    anchor.remove();
+    setTeacherFilter(document.querySelector("#classTabs button.active")?.dataset.filter||"ALL");
     panel.querySelectorAll("button[data-classroom]").forEach(button=>{
       button.addEventListener("click",async()=>{
         if(button.disabled)return;
@@ -76,11 +101,21 @@ body.lesson-tutorial #runBtn{min-width:160px}
       const enabled=!!snapshot(cls)[field];
       button.classList.toggle("enabled",enabled);
       button.setAttribute("aria-pressed",String(enabled));
-      const title=field==="tutorialOpen"?"튜토리얼 페이지 오픈":"탐구 실행하기";
+      const title=field==="tutorialOpen"?"1. 튜토리얼 페이지 오픈":"2. 탐구 실행하기";
       button.innerHTML='<strong>'+(enabled?"🔓 활성화됨":"🔒 비활성화")+'</strong><span>'+title+'</span>';
     });
   }
+  function setTeacherFilter(selected){
+    const filter=classes.includes(selected)?selected:"ALL";
+    const grid=$("lessonTeacherGrid");
+    if(!grid)return;
+    grid.classList.toggle("single-class",filter!=="ALL");
+    grid.querySelectorAll("[data-teacher-class]").forEach(card=>{
+      card.hidden=filter!=="ALL"&&card.dataset.teacherClass!==filter;
+    });
+  }
   window.YeastLesson={
+    setTeacherFilter,
     isOxygenMode:()=>false,
     matchPair:()=>null,
     teacherBadge:()=>"",
