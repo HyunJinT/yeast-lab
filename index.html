@@ -3304,17 +3304,21 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     const liveChallenge=challengeMode?liveChallengeSnapshot(g):null;
     const c=challengeMode?(liveChallenge?.conditions||{}):(g.current?.conditions||{});
     const currentText=challengeMode?(liveChallenge?.reason||""):(g.current?.reason||"");
+    const detailRecords=g.phase==="tutorial"?(g.tutorialExperiments||[]):(g.experiments||[]);
+    const savedTutorial=g.tutorialExperiments||[];
+    const savedInquiry=g.experiments||[];
     $("groupDetail").innerHTML=`<span class="step-kicker">${esc(g.classId)} CLASS · GROUP DETAIL</span><h2>${esc(g.group)}</h2>
-      <div class="detail-grid"><section><h3>현재 상태</h3><p>${stageName(g.stage)} · ${challengeMode?(liveChallenge?.minute??0):(g.current?.minute??0)}/30 min</p><p>${formatConditions(c)}</p><p><b>작성 중:</b> ${esc(currentText)}</p>
+      <div class="detail-grid"><section><h3>현재 상태</h3><p>${stageName(g.stage,g.phase)} · ${challengeMode?(liveChallenge?.minute??0):(g.current?.minute??0)}/30 min</p><p>${formatConditions(c)}</p><p><b>작성 중:</b> ${esc(currentText)}</p>
       <canvas id="detailGraph" width="720" height="330" style="width:100%;background:#06141f;border-radius:10px"></canvas></section>
-      <section><h3>실험 기록</h3>${(g.experiments||[]).map((e,i)=>{const f=e.curve?.at(-1)||{};return `<div class="detail-experiment" style="--card-color:${e.color||"#38bdf8"}"><b>실험 ${i+1}</b><br>${formatConditions(e.conditions)}<br>CO₂ ${Number(f.co2||0).toFixed(1)}mL · 에탄올 ${Number(f.ethanol||0).toFixed(2)}% · O₂ 소비 ${Number(f.o2||0).toFixed(1)}mL · ATP 환산 ${Number(f.atpMmol||0).toFixed(1)}mmol<br>이유: ${esc(e.reason)}</div>`}).join("")||"아직 기록 없음"}</section></div>
+      <section><h3>공통 실험 기록 (${savedTutorial.length}회)</h3>${savedTutorial.map((e,i)=>{const f=e.curve?.at(-1)||{};return `<div class="detail-experiment"><b>공통 실험 ${i+1}</b><br>${formatConditions(e.conditions)}<br>CO₂ ${Number(f.co2||0).toFixed(1)} mL</div>`}).join("")||"아직 기록 없음"}
+      <h3>자유탐구 기록 (${savedInquiry.length}회)</h3>${savedInquiry.map((e,i)=>{const f=e.curve?.at(-1)||{};return `<div class="detail-experiment" style="--card-color:${e.color||"#38bdf8"}"><b>실험 ${i+1}</b><br>${formatConditions(e.conditions)}<br>CO₂ ${Number(f.co2||0).toFixed(1)}mL · 에탄올 ${Number(f.ethanol||0).toFixed(2)}% · O₂ 소비 ${Number(f.o2||0).toFixed(1)}mL · ATP 환산 ${Number(f.atpMmol||0).toFixed(1)}mmol<br>이유: ${esc(e.reason)}</div>`}).join("")||"아직 기록 없음"}</section></div>
       <hr style="border-color:#24445a"><h3>초기 가설</h3><p>${esc(g.hypothesis||"아직 작성 전")}</p><h3>생각 변화 기록</h3><p>${esc(g.reflection?.changedThinking||"아직 작성 전")}</p><p><b>현재 설명:</b> ${esc(g.reflection?.currentExplanation||"아직 작성 전")}</p><div class="detail-delete-row"><button id="deleteDetailGroupBtn" class="detail-delete-btn" type="button">이 모둠 데이터 삭제</button></div>`;
     $("groupModal").classList.remove("hidden");
     setTimeout(()=>{
       if(challengeMode && liveChallenge?.curve?.length){
         YeastCharts.drawSeries($("detailGraph"),[{id:"challenge",curve:liveChallenge.curve,color:"#26d9c7"}])
       }else{
-        YeastCharts.drawSeries($("detailGraph"),g.experiments||[])
+        YeastCharts.drawSeries($("detailGraph"),detailRecords)
       }
     },20);
     setTimeout(()=>{
