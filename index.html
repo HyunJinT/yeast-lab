@@ -2375,7 +2375,7 @@ window.YEAST_FIREBASE_CONFIG = {
     const open=!!c.tutorialOpen, start=$("tutorialStartBtn"), status=$("tutorialWaitStatus"), inquiry=$("inquiryGateBtn");
     if(start){start.disabled=!open;start.textContent=open?"실험하러 가기 →":"🔒 실험하러 가기 · 대기 중"}
     if(status)status.textContent=open?"🔓 튜토리얼 오픈! 실험하러 가기를 눌러주세요.":"🔒 선생님의 튜토리얼 오픈을 기다리는 중";
-    if($("waitingIdentity"))$("waitingIdentity").textContent=state.classId?state.classId+"반 · "+state.group:"";
+    if($("waitingIdentity"))$("waitingIdentity").textContent=state.classId?window.YeastClassLabel(state.classId)+" · "+state.group:"";
     if(inquiry){
       inquiry.disabled=!state.classId||!state.group||!c.inquiryEnabled||running||state.phase==="inquiry";
       inquiry.textContent=state.phase==="inquiry"?"✓ 탐구 진행 중":c.inquiryEnabled?"탐구 실행하기 →":"🔒 탐구 실행하기";
@@ -3263,15 +3263,21 @@ window.YEAST_FIREBASE_CONFIG = {
     renderChallengeControls();
     await YeastCloud.publishControl(cls,next)
   }));
+  let queuedTeacherRender=false;
+  function scheduleTeacherRender(){
+    if(queuedTeacherRender)return;
+    queuedTeacherRender=true;
+    setTimeout(()=>{queuedTeacherRender=false;render()},160);
+  }
   function ingest(p){
     if(!p?.key)return;
     if(p.type==="deleteGroup"){
       groups.delete(p.key);
-      render();
+      scheduleTeacherRender();
       return
     }
     groups.set(p.key,p);
-    render()
+    scheduleTeacherRender()
   }
   async function startMonitor(){
     groups=new Map();
