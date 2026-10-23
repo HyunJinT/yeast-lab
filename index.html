@@ -2803,6 +2803,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     const missing=fields.find(([id])=>!$(id).value.trim());
     if(missing){showWarning(`‘${missing[1]}’ 항목을 입력하세요.`,missing[0]);return}
     $("reflectionMessage").textContent="";
+    state.reflection.reportCompleted=true;
     show("reportView")
   });
   function renderReport(){
