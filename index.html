@@ -2344,6 +2344,13 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     }
     if(demo){for(const [k,v] of Object.entries({substrate:"glucose",sugar:"5",temp:"30",yeast:"1"})){controls[k].value=v;controls[k].disabled=true}}
     else if(!running){for(const k of ["substrate","sugar","temp","yeast"])controls[k].disabled=false}
+    const sceneNote=$("labView")?.querySelector(".realism-note");
+    if(sceneNote){
+      if(!window.YeastDefaultSceneNote)window.YeastDefaultSceneNote=sceneNote.textContent;
+      sceneNote.textContent=demo
+        ?"수업용 대사경로 비교 · 실제 측정값 아님 · 반응액 20 mL · 30분 가상 관찰"
+        :window.YeastDefaultSceneNote;
+    }
     const note=$("labView")?.querySelector(".relative-index-note");
     if(note){
       if(!window.YeastDefaultModelNote)window.YeastDefaultModelNote=note.textContent;
@@ -2765,7 +2772,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
             <span class="result-chip">O₂ 소비 ${f.o2.toFixed(1)}mL</span>
             <span class="result-chip lesson-atp">ATP 환산 ${f.atpMmol.toFixed(1)}mmol</span>
           </div>
-          <div class="metric-wording">CO₂·O₂·에탄올·당 잔량은 문헌 범위 기반 추정값이며, ATP는 대사경로 이론수율 기반 누적 환산값입니다.</div>
+          <div class="metric-wording">${c.model==="pathway-v2"?"교육용 대사경로 단순화 모형의 계산값입니다. 동일한 포도당 소비량을 가정했으며 실제 효모 실험의 예측값은 아닙니다.":"CO₂·O₂·에탄올·당 잔량은 문헌 범위를 참고한 교육용 추정값이며, ATP는 대사경로 이론수율 기반 누적 환산값입니다."}</div>
         </div>
       </article>`
     }).join("");
@@ -3363,7 +3370,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     $("groupDetail").innerHTML=`<span class="step-kicker">${esc(g.classId)} CLASS · GROUP DETAIL</span><h2>${esc(g.group)}</h2>
       <div class="detail-grid"><section><h3>현재 상태</h3><p>${stageName(g.stage,g.phase)} · ${challengeMode?(liveChallenge?.minute??0):(g.current?.minute??0)}/30 min</p><p>${formatConditions(c)}</p><p><b>작성 중:</b> ${esc(currentText)}</p>
       <canvas id="detailGraph" width="720" height="330" style="width:100%;background:#06141f;border-radius:10px"></canvas></section>
-      <section><h3>공통 실험 기록 (${savedTutorial.length}회)</h3>${savedTutorial.map((e,i)=>{const f=e.curve?.at(-1)||{};return `<div class="detail-experiment"><b>공통 실험 ${i+1}</b><br>${formatConditions(e.conditions)}<br>CO₂ ${Number(f.co2||0).toFixed(1)} mL</div>`}).join("")||"아직 기록 없음"}
+      <section><h3>공통 실험 기록 (${savedTutorial.length}회)</h3>${savedTutorial.map((e,i)=>{const f=e.curve?.at(-1)||{};return `<div class="detail-experiment"><b>공통 실험 ${i+1}${e.modelVersion?"":" (이전 모형)"}</b><br>${formatConditions(e.conditions)}<br>CO₂ ${Number(f.co2||0).toFixed(1)} mL</div>`}).join("")||"아직 기록 없음"}
       <h3>자유탐구 기록 (${savedInquiry.length}회)</h3>${savedInquiry.map((e,i)=>{const f=e.curve?.at(-1)||{};return `<div class="detail-experiment" style="--card-color:${e.color||"#38bdf8"}"><b>실험 ${i+1}</b><br>${formatConditions(e.conditions)}<br>CO₂ ${Number(f.co2||0).toFixed(1)}mL · 에탄올 ${Number(f.ethanol||0).toFixed(2)}% · O₂ 소비 ${Number(f.o2||0).toFixed(1)}mL · ATP 환산 ${Number(f.atpMmol||0).toFixed(1)}mmol<br>이유: ${esc(e.reason)}</div>`}).join("")||"아직 기록 없음"}</section></div>
       <hr style="border-color:#24445a"><h3>초기 가설</h3><p>${esc(g.hypothesis||"아직 작성 전")}</p><h3>생각 변화 기록</h3><p>${esc(g.reflection?.changedThinking||"아직 작성 전")}</p><p><b>현재 설명:</b> ${esc(g.reflection?.currentExplanation||"아직 작성 전")}</p><div class="detail-delete-row"><button id="deleteDetailGroupBtn" class="detail-delete-btn" type="button">이 모둠 데이터 삭제</button></div>`;
     $("groupModal").classList.remove("hidden");
