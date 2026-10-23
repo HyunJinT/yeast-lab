@@ -3258,7 +3258,7 @@ window.YEAST_FIREBASE_CONFIG = {
   });
   function runConfirmedChallenge(request){
     refreshChallengeGate();
-    if(!request||request.mode!=="challenge"||request.phase!=="challenge"||
+    if(!request||request.mode!=="challenge"||state.stage!=="challenge"||
        state.phase!==request.phase||!challengeUnlocked||state.challenge?.startedAt||running)return;
     const c=request.conditions,reason=request.reason;
     const curve=YeastSim.makeCurve(c);
