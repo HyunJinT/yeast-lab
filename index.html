@@ -2209,7 +2209,7 @@ window.YEAST_FIREBASE_CONFIG = {
     }
   }
   function subscribeLocal(fn){listeners.add(fn);return()=>listeners.delete(fn)}
-  async function subscribeCloud(fn){
+  async function subscribeCloud(fn,onError=()=>{}){
     await cloudPromise;
     if(!cloudReady)return()=>{};
     // Listen to only the group that changed. A 1-second update from one
@@ -2223,13 +2223,17 @@ window.YEAST_FIREBASE_CONFIG = {
         keys.set(classId+"/"+snap.key,data.key);
         fn(data);
       };
-      unsubs.push(cloud.onChildAdded(groupRef,accept));
-      unsubs.push(cloud.onChildChanged(groupRef,accept));
+      const readError=err=>{
+        console.warn("Live group subscription failed:",err);
+        onError(err);
+      };
+      unsubs.push(cloud.onChildAdded(groupRef,accept,readError));
+      unsubs.push(cloud.onChildChanged(groupRef,accept,readError));
       unsubs.push(cloud.onChildRemoved(groupRef,snap=>{
         const key=keys.get(classId+"/"+snap.key)||snap.val()?.key||snap.key;
         keys.delete(classId+"/"+snap.key);
         fn({type:"deleteGroup",classId,key});
-      }));
+      },readError));
     });
     return ()=>unsubs.forEach(unsub=>unsub());
   }
@@ -3350,7 +3354,7 @@ window.YEAST_FIREBASE_CONFIG = {
 <script>(() => {
   const $=id=>document.getElementById(id), views=[...document.querySelectorAll("#teacherContainer .view")];
   const TEACHER_SALT="ylab-teacher-v1::", TEACHER_HASH="17372d957ddbfa9704757d270b2867d465e5526640b8ee60a2b762a9cd9d4e75";
-  let groups=new Map(),filter="ALL",cloudUnsub=null,controlCloudUnsub=null,teacherTicker=null,challengeControls={B:false,C:false,D:false},detailKey=null;
+  let groups=new Map(),filter="ALL",cloudUnsub=null,controlCloudUnsub=null,localUnsub=null,controlLocalUnsub=null,teacherTicker=null,challengeControls={B:false,C:false,D:false},detailKey=null;
   function show(id){views.forEach(v=>v.classList.toggle("active",v.id===id))}
   async function sha256(text){const buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(text));return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("")}
   $("teacherLoginBtn").addEventListener("click",async()=>{
@@ -3371,8 +3375,12 @@ window.YEAST_FIREBASE_CONFIG = {
   $("teacherLogoutBtn").addEventListener("click",()=>{
     if(cloudUnsub)cloudUnsub();
     if(controlCloudUnsub)controlCloudUnsub();
+    if(localUnsub)localUnsub();
+    if(controlLocalUnsub)controlLocalUnsub();
     cloudUnsub=null;
     controlCloudUnsub=null;
+    localUnsub=null;
+    controlLocalUnsub=null;
     if(teacherTicker){clearInterval(teacherTicker);teacherTicker=null}
     window.YeastNav?.home()
   });
@@ -3425,12 +3433,17 @@ window.YEAST_FIREBASE_CONFIG = {
   async function startMonitor(){
     groups=new Map();
     YeastCloud.localSnapshot().forEach(ingest);
-    YeastCloud.subscribeLocal(ingest);
-    cloudUnsub=await YeastCloud.subscribeCloud(ingest);
+    if(localUnsub)localUnsub();
+    if(controlLocalUnsub)controlLocalUnsub();
+    localUnsub=YeastCloud.subscribeLocal(ingest);
+    cloudUnsub=await YeastCloud.subscribeCloud(ingest,err=>{
+      $("syncNotice").textContent="동기화 상태: 학생 모둠 데이터 수신 오류 · Firebase 읽기 권한과 네트워크를 확인하세요.";
+      $("syncNotice").title=err?.message||String(err);
+    });
     ["B","C","D"].forEach(cls=>{
       challengeControls[cls]=!!YeastCloud.controlSnapshot(cls).challengeEnabled
     });
-    YeastCloud.subscribeControlLocal(onControl);
+    controlLocalUnsub=YeastCloud.subscribeControlLocal(onControl);
     controlCloudUnsub=await YeastCloud.subscribeControlCloud(onControl);
     $("syncNotice").textContent=YeastCloud.isCloud()
       ? "동기화 상태: 연결됨 · 다른 컴퓨터의 학생 데이터도 자동으로 표시됩니다."
