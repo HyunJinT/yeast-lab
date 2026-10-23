@@ -1352,7 +1352,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
           <p>• 당 농도를 5%에서 10%로 높이면 30분 동안의 CO₂ 발생량이 증가할 것이다.</p>
           <p>• 당 농도가 너무 높아지면 중간 농도일 때보다 CO₂ 발생량이 감소할 것이다.</p>
           <p>• 효모량이 많아지면 같은 시간 동안 발생하는 CO₂의 양이 증가할 것이다.</p>
-          <small>※ “발효가 잘될 것이다”라고만 쓰기보다, CO₂ 발생량처럼 관찰할 수 있는 결과를 구체적으로 쓰는 것이 좋습니다.</small>
+          <small>※ “효모가 더 활발하게 활동할 것이다”라고만 쓰기보다, CO₂ 발생량처럼 관찰할 수 있는 결과를 구체적으로 쓰는 것이 좋습니다.</small>
         </div>
 
         <div class="hypothesis-checks compact-checks">
@@ -1431,7 +1431,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
           <div><span>당 잔량 추정</span><div class="meter"><i id="substrateMeter"></i></div><b id="substrateLive">0.00 g</b></div>
           <div><span>ATP 생성 환산량*</span><div class="meter"><i id="atpMeter"></i></div><b id="atpLive">0.0 mmol</b></div>
         </div>
-        <p class="relative-index-note">※ CO₂·O₂·에탄올·당 잔량은 문헌의 S. cerevisiae 대사속도를 바탕으로 한 교육용 추정값입니다. 산소 공급 시에도 발효를 병행할 수 있으며, 산소는 30분 동안 계속 공급되는 것으로 가정합니다. *ATP는 이론적 수율에 따른 누적 환산값으로, 세포 안에 저장된 ATP 농도가 아닙니다.</p>
+        <p class="relative-index-note">※ CO₂·O₂·에탄올·당 잔량은 문헌의 S. cerevisiae 대사속도를 바탕으로 한 교육용 추정값입니다. 산소 공급 조건에서도 여러 대사 경로가 함께 작동할 수 있으며, 산소는 30분 동안 계속 공급되는 것으로 가정합니다. *ATP는 이론적 수율에 따른 누적 환산값으로, 세포 안에 저장된 ATP 농도가 아닙니다.</p>
       </section>
 
       <section class="glass panel graph-controls-panel">
@@ -1785,8 +1785,8 @@ window.YEAST_FIREBASE_CONFIG = {
   // 참고 범위
   // - 무산소 대표 관측값: qGlc≈13.4, qCO₂≈21.6 mmol gDW⁻¹ h⁻¹
   // - 유산소 배양 대표 범위: qGlc≈12~13, qCO₂≈20~23, qO₂≈2~3
-  // - 관측값 자체를 복사한 것이 아니라 발효(2 CO₂)·호흡(6 CO₂)의 물질수지를
-  //   만족시키도록 보정한 교육용 추정값이다. 산소 공급 시에도 발효가 병행된다.
+  // - 관측값 자체를 복사한 것이 아니라 산소 비공급 경로(2 CO₂)·산소호흡 경로(6 CO₂)의 물질수지를
+  //   만족시키도록 보정한 교육용 추정값이다. 산소 공급 시에도 여러 대사 경로가 함께 작동한다.
   // ─────────────────────────────────────────────────────────────
 
   const VOLUME_ML=20;
@@ -1828,7 +1828,7 @@ window.YEAST_FIREBASE_CONFIG = {
 
   function substrateFactor(kind){
     // baker's yeast는 glucose/fructose를 빠르게 이용하며 sucrose도 invertase로 이용 가능.
-    // 일반 S. cerevisiae가 전분을 직접 분해·발효하지는 못하므로 0 처리.
+    // 일반 S. cerevisiae가 전분을 직접 분해하여 이용하지는 못하므로 0 처리.
     return {
       glucose:1.00,
       fructose:.98,
@@ -1894,7 +1894,7 @@ window.YEAST_FIREBASE_CONFIG = {
       return {qGlc:13.4,qO2:0,catabolicShare:.80}
     }
     // 산소 지속 공급 + 당이 풍부한 배양: qGlc≈12~13, qO2≈2~3,
-    // qCO2≈20~23의 문헌 범위. 산소가 있어도 알코올 발효를 병행한다.
+    // qCO2≈20~23의 문헌 범위. 산소가 있어도 포도당은 여러 경로로 대사될 수 있다.
     return {qGlc:12.3,qO2:2.5,catabolicShare:.82}
   }
 
@@ -1980,10 +1980,10 @@ window.YEAST_FIREBASE_CONFIG = {
     const consumedEq=Math.min(potentialGlc,availableEq*maxUsableFraction);
     const substrateLimit=potentialGlc>0?consumedEq/potentialGlc:0;
 
-    // 호흡/발효를 독립적인 CO₂ 숫자로 정하지 않고 반응식에 따라 합산.
-    // 육탄당 1 mmol 발효: CO₂ 2 mmol, 에탄올 2 mmol, ATP 2 mmol.
+    // 산소 유무에 따른 대사 경로를 독립적인 CO₂ 숫자로 정하지 않고 반응식에 따라 합산.
+    // 육탄당 1 mmol을 산소 없이 분해: CO₂ 2 mmol, 에탄올 2 mmol, ATP 2 mmol.
     // 육탄당 1 mmol 완전 호흡: O₂ 6 mmol, CO₂ 6 mmol, ATP 약 30 mmol.
-    // 산소 공급 조건에서도 크랩트리 효과 때문에 발효가 병행된다.
+    // 산소 공급 조건에서도 크랩트리 효과로 산소 비의존 대사 경로가 병행된다.
     const catabolizedEq=consumedEq*anchor.catabolicShare;
     const oxygenCapacity=anchor.qO2*yeast*.5*scale*substrateLimit;
     const o2Mmol=c.oxygen==="on"
@@ -2004,7 +2004,7 @@ window.YEAST_FIREBASE_CONFIG = {
     const remainingG=Math.max(0,initialG-consumedG);
     const usedPct=initialG>0?clamp(consumedG/initialG*100,0,100):0;
 
-    // CO₂와 동일한 호흡/발효 분할량으로 ATP도 계산한다.
+    // CO₂와 동일한 대사 경로별 분할량으로 ATP도 계산한다.
     // 소비된 당 전량이 아니라, 생체물질 등으로 가지 않은 분해 기질을 이용한다.
     const atpMmol=fermentativeEq*2 + respiredEq*30;
     const atpMeter=clamp(atpMmol/40*100,0,100);
