@@ -1490,6 +1490,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
         <textarea id="changedThinking" placeholder="처음에는 (   )라고 생각했지만, 실험에서 (   )을 확인하여 지금은 (   )라고 생각한다."></textarea>
         <label for="currentExplanation">현재 우리의 설명</label>
         <textarea id="currentExplanation" placeholder="효모의 에너지 획득에 대해 지금은 어떻게 설명할 수 있나요?"></textarea>
+        <div class="lesson-oxygen-only lesson-field"><label for="openQuestion">아직 설명할 수 없는 점 · 추가로 궁금한 점</label><textarea id="openQuestion" placeholder="산소가 없어도 CO₂가 발생한다면, 어떤 과정을 통해 에너지를 얻는 걸까요?"></textarea></div>
         <button id="makeReportBtn" class="primary-btn full" type="button">연구 결과 카드 만들기</button>
         <p id="reflectionMessage" class="form-error" aria-live="polite"></p>
       </section>
@@ -1533,6 +1534,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
         <div class="poster-col">
           <article><span>생각의 변화</span><p id="posterChanged"></p></article>
           <article class="accent"><span>현재 우리의 설명</span><p id="posterExplanation"></p></article>
+          <article class="lesson-oxygen-only"><span>추가로 궁금한 점</span><p id="posterOpenQuestion"></p></article>
           <article><span>모델 안내</span><p>문헌에 보고된 효모의 대사속도·수율을 기준으로 보정한 교육용 추정값입니다. 균주, pH, 교반, 실제 산소전달 등에 따라 실험값은 달라질 수 있습니다.</p></article>
         </div>
       </div>
@@ -2047,13 +2049,25 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     }
   }
   async function publishControl(classId,challengeEnabled){
-    const payload={type:"control",classId,challengeEnabled:!!challengeEnabled,updatedAt:Date.now()};
+    const payload={...controlSnapshot(classId),type:"control",classId,challengeEnabled:!!challengeEnabled,updatedAt:Date.now()};
     safeStorage.set("yeast:control:"+safeKey(classId),JSON.stringify(payload));
     if(channel) channel.postMessage(payload);
     controlListeners.forEach(fn=>fn(payload));
     await cloudPromise;
     if(cloudReady){
       try{await cloud.set(cloud.ref(cloud.db,`controls/${safeKey(classId)}`),payload)}catch(e){console.warn(e)}
+    }
+    return payload
+  }
+  async function publishLessonControl(classId,patch){
+    const payload={...controlSnapshot(classId),...patch,type:"control",classId,updatedAt:Date.now()};
+    safeStorage.set("yeast:control:"+safeKey(classId),JSON.stringify(payload));
+    if(channel) channel.postMessage(payload);
+    controlListeners.forEach(fn=>fn(payload));
+    await cloudPromise;
+    if(cloudReady){
+      try{await cloud.set(cloud.ref(cloud.db,`controls/${safeKey(classId)}`),payload)}
+      catch(e){console.warn("Lesson control sync failed",e);throw e}
     }
     return payload
   }
@@ -2088,7 +2102,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
   }
   window.YeastCloud={
     publish,subscribeLocal,subscribeCloud,localSnapshot,deleteGroup,
-    controlSnapshot,publishControl,subscribeControlLocal,subscribeControlCloud,
+    controlSnapshot,publishControl,publishLessonControl,subscribeControlLocal,subscribeControlCloud,
     isCloud:()=>cloudReady,
     status:()=>cloudReady?"연결됨":(cloudError?"연결안됨":"연결 중"),
     error:()=>cloudError,
@@ -2620,9 +2634,9 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
           <p><b>선택 이유:</b> ${escapeHtml(e.reason)}</p>
           <div class="results">
             <span class="result-chip">CO₂ 누적 ${f.co2.toFixed(1)}mL</span>
-            <span class="result-chip">에탄올 ${f.ethanol.toFixed(2)}%</span>
+            <span class="result-chip lesson-ethanol">에탄올 ${f.ethanol.toFixed(2)}%</span>
             <span class="result-chip">O₂ 소비 ${f.o2.toFixed(1)}mL</span>
-            <span class="result-chip">ATP 환산 ${f.atpMmol.toFixed(1)}mmol</span>
+            <span class="result-chip lesson-atp">ATP 환산 ${f.atpMmol.toFixed(1)}mmol</span>
           </div>
           <div class="metric-wording">CO₂·O₂·에탄올·당 잔량은 문헌 범위 기반 추정값이며, ATP는 대사경로 이론수율 기반 누적 환산값입니다.</div>
         </div>
@@ -2715,6 +2729,10 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     let ids=(state.reflection?.selectedExperimentIds||[]).filter(id=>valid.has(id)).slice(0,5);
     // 실험이 1개뿐이면 자연스럽게 그 1개를 자동 선택
     if(state.experiments.length===1 && ids.length===0) ids=[state.experiments[0].id];
+    if(window.YeastLesson?.isOxygenMode() && ids.length===0){
+      const pair=window.YeastLesson.matchPair(state.experiments);
+      if(pair) ids=pair.map(e=>e.id);
+    }
     state.reflection.selectedExperimentIds=ids;
   }
   function toggleEvidenceSelection(expId){
@@ -2749,7 +2767,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
         <span class="evidence-select-mark">${selected?"✓":""}</span>
         <div class="evidence-title">실험 ${i+1}</div>
         <div class="evidence-condition">${YeastSim.substrateName[c.substrate]} · ${c.oxygen==="on"?"산소 공급":"산소 없음"} · 당 ${c.sugar}% · ${c.temp}℃ · 효모 ${c.yeast.toFixed(1)}g</div>
-        <div class="evidence-result">CO₂ ${f.co2.toFixed(1)}mL · 에탄올 ${f.ethanol.toFixed(2)}% · ATP ${f.atpMmol.toFixed(1)}mmol</div>
+        <div class="evidence-result">CO₂ ${f.co2.toFixed(1)}mL<span class="lesson-ethanol"> · 에탄올 ${f.ethanol.toFixed(2)}%</span><span class="lesson-atp"> · ATP ${f.atpMmol.toFixed(1)}mmol</span></div>
         <div class="evidence-reason">선택 이유: ${escapeHtml(e.reason)}</div>
       </button>`
     }).join("");
@@ -2760,9 +2778,9 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
 
     $("reflectionHypothesis").textContent=state.hypothesis||"가설 기록 없음";
     const r=state.reflection||{};
-    ["keyResult","unexpected","changedThinking","currentExplanation"].forEach(id=>$(id).value=r[id]||"")
+    ["keyResult","unexpected","changedThinking","currentExplanation","openQuestion"].forEach(id=>$(id).value=r[id]||"")
   }
-  ["keyResult","unexpected","changedThinking","currentExplanation"].forEach(id=>$(id).addEventListener("input",()=>{state.reflection[id]=$(id).value;save()}));
+  ["keyResult","unexpected","changedThinking","currentExplanation","openQuestion"].forEach(id=>$(id).addEventListener("input",()=>{state.reflection[id]=$(id).value;save()}));
   $("makeReportBtn").addEventListener("click",()=>{
     normalizeSelectedExperiments();
     const chosen=selectedExperiments();
@@ -2781,6 +2799,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
       ["changedThinking","생각이 어떻게 바뀌었는지"],
       ["currentExplanation","현재 우리의 설명"]
     ];
+    if(window.YeastLesson?.isOxygenMode()) fields.push(["openQuestion","추가로 궁금한 점"]);
     const missing=fields.find(([id])=>!$(id).value.trim());
     if(missing){showWarning(`‘${missing[1]}’ 항목을 입력하세요.`,missing[0]);return}
     $("reflectionMessage").textContent="";
@@ -2797,6 +2816,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     $("posterUnexpected").textContent=state.reflection.unexpected||"";
     $("posterChanged").textContent=state.reflection.changedThinking||"";
     $("posterExplanation").textContent=state.reflection.currentExplanation||"";
+    $("posterOpenQuestion").textContent=state.reflection.openQuestion||"";
 
     YeastCharts.drawSeries($("posterGraph"),chosen.map(x=>x.experiment));
 
@@ -2807,7 +2827,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
         <span class="poster-trial-no">실험 ${index+1}</span>
         <span class="poster-trial-cond">${cond}</span>
         <span class="poster-trial-reason"><b>선택 이유:</b> ${escapeHtml(e.reason)}</span>
-        <span class="poster-trial-result"><b>결과:</b> CO₂ ${f.co2.toFixed(1)}mL · 에탄올 ${f.ethanol.toFixed(2)}% · ATP ${f.atpMmol.toFixed(1)}mmol</span>
+        <span class="poster-trial-result"><b>결과:</b> CO₂ ${f.co2.toFixed(1)}mL<span class="lesson-ethanol"> · 에탄올 ${f.ethanol.toFixed(2)}%</span><span class="lesson-atp"> · ATP ${f.atpMmol.toFixed(1)}mmol</span></span>
       </div>`
     }).join("") || '<div class="empty-state">선택된 실험 없음</div>';
   }
@@ -3175,7 +3195,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
       const minute=challengeMode?(liveChallenge?.minute??0):(g.current?.minute??0);
       const reason=challengeMode?(liveChallenge?.reason||"FINAL START 대기"):(g.current?.reason||g.experiments?.at(-1)?.reason||"");
       return `<article class="group-card" data-key="${esc(g.key)}"><div class="group-title"><h3>${esc(g.classId)}반 · ${esc(g.group)}</h3><div class="group-card-actions"><span class="stage-tag">${stageName(g.stage)}</span><button type="button" class="group-delete-btn" data-delete-key="${esc(g.key)}" title="이 모둠 데이터 삭제">삭제</button></div></div>
-      <div class="group-meta">실험 ${g.experiments?.length||0}회 · ${timeAgo(g.updatedAt)}</div>
+      <div class="group-meta">실험 ${g.experiments?.length||0}회 · ${timeAgo(g.updatedAt)}${window.YeastLesson?.teacherBadge(g)||""}</div>
       <div class="group-conditions"><span>${YeastSimName(c.substrate)}</span><span>${c.oxygen==="on"?"산소 공급":"산소 공급 없음"}</span><span>${c.sugar??"-"}%</span><span>${c.temp??"-"}℃</span><span>효모 ${c.yeast!=null?Number(c.yeast).toFixed(1):"-"}g</span></div>
       <canvas class="mini-canvas" width="360" height="100" data-curve="${esc(g.key)}"></canvas>
       <div class="typing-preview">현재 ${minute}/30 min · CO₂ ${Number(co2).toFixed(1)} mL · “${esc(reason)}”</div></article>`
@@ -3253,5 +3273,6 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
   </div>
 </div>
 
+<script src="./lesson-mode.js"></script>
 </body>
 </html>
