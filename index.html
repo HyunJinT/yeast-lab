@@ -3209,7 +3209,7 @@ window.YEAST_FIREBASE_CONFIG = {
 <script>(() => {
   const $=id=>document.getElementById(id), views=[...document.querySelectorAll("#teacherContainer .view")];
   const TEACHER_SALT="ylab-teacher-v1::", TEACHER_HASH="17372d957ddbfa9704757d270b2867d465e5526640b8ee60a2b762a9cd9d4e75";
-  let groups=new Map(),filter="ALL",cloudUnsub=null,controlCloudUnsub=null,teacherTicker=null,challengeControls={B:false,C:false,D:false};
+  let groups=new Map(),filter="ALL",cloudUnsub=null,controlCloudUnsub=null,teacherTicker=null,challengeControls={B:false,C:false,D:false},detailKey=null;
   function show(id){views.forEach(v=>v.classList.toggle("active",v.id===id))}
   async function sha256(text){const buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(text));return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("")}
   $("teacherLoginBtn").addEventListener("click",async()=>{
@@ -3373,7 +3373,7 @@ window.YEAST_FIREBASE_CONFIG = {
       ["접속 모둠",all.length],["실험 중",active.length],["생각 정리",reflect.length],["연구 완료",done.length],["챌린지",challenge.length]
     ].map(([a,b])=>`<div class="stat-card"><span>${a}</span><strong>${b}</strong></div>`).join("");
     const grid=$("groupGrid");
-    if(!all.length){grid.innerHTML='<div class="empty-state">아직 표시할 모둠이 없습니다. 학생 컴퓨터에서 실시간 연결됨 표시를 확인한 뒤 모둠 정보를 입력해보세요.</div>';return}
+    if(!all.length){if(detailKey)closeGroupDetail();grid.innerHTML='<div class="empty-state">아직 표시할 모둠이 없습니다. 학생 컴퓨터에서 실시간 연결됨 표시를 확인한 뒤 모둠 정보를 입력해보세요.</div>';return}
     grid.innerHTML=all.map(g=>{
       const challengeMode=g.stage==="challenge"||g.challenge?.startedAt;
       const liveChallenge=challengeMode?liveChallengeSnapshot(g):null;
@@ -3382,7 +3382,7 @@ window.YEAST_FIREBASE_CONFIG = {
       const co2=challengeMode?(liveChallenge?.co2??0):(g.current?.co2??recent?.at(-1)?.curve?.at(-1)?.co2??0);
       const minute=challengeMode?(liveChallenge?.minute??0):(g.current?.minute??0);
       const reason=challengeMode?(liveChallenge?.reason||"FINAL START 대기"):(g.current?.reason||recent?.at(-1)?.reason||"");
-      return `<article class="group-card" data-key="${esc(g.key)}"><div class="group-title"><h3>${esc(window.YeastClassLabel(g.classId))} · ${esc(g.group)}</h3><div class="group-card-actions"><span class="stage-tag">${stageName(g.stage,g.phase)}</span><button type="button" class="group-delete-btn" data-delete-key="${esc(g.key)}" title="이 모둠 데이터 삭제">삭제</button></div></div>
+      return `<article class="group-card" role="button" tabindex="0" aria-label="${esc(window.YeastClassLabel(g.classId))} ${esc(g.group)} 모둠 실험 크게 보기" data-key="${esc(g.key)}"><div class="group-title"><h3>${esc(window.YeastClassLabel(g.classId))} · ${esc(g.group)}</h3><div class="group-card-actions"><span class="stage-tag">${stageName(g.stage,g.phase)}</span><button type="button" class="group-delete-btn" data-delete-key="${esc(g.key)}" title="이 모둠 데이터 삭제">삭제</button></div></div>
       <div class="group-meta">공통 ${g.tutorialExperiments?.length||0}회 · 탐구 ${g.experiments?.length||0}회 · ${timeAgo(g.updatedAt)}${window.YeastLesson?.teacherBadge(g)||""}</div>
       <div class="group-conditions"><span>${YeastSimName(c.substrate)}</span><span>${c.oxygen==="on"?"산소 공급":"산소 공급 없음"}</span><span>${c.sugar??"-"}%</span><span>${c.temp??"-"}℃</span><span>효모 ${c.yeast!=null?Number(c.yeast).toFixed(1):"-"}g</span></div>
       <canvas class="mini-canvas" width="360" height="100" data-curve="${esc(g.key)}"></canvas>
@@ -3406,47 +3406,117 @@ window.YEAST_FIREBASE_CONFIG = {
       groups.delete(g.key);
       render();
     }));
-    document.querySelectorAll(".group-card").forEach(card=>card.addEventListener("click",()=>openDetail(groups.get(card.dataset.key))))
+    document.querySelectorAll(".group-card").forEach(card=>{
+      card.addEventListener("click",()=>openDetail(groups.get(card.dataset.key)));
+      card.addEventListener("keydown",event=>{
+        if(event.key!=="Enter"&&event.key!==" ")return;
+        if(event.target!==card)return;
+        event.preventDefault();openDetail(groups.get(card.dataset.key));
+      });
+    });
+    if(detailKey)refreshDetailLive();
+  }
+
+  function closeGroupDetail(){
+    detailKey=null;
+    $("groupModal").classList.add("hidden");
+  }
+  function groupExperimentSnapshot(g){
+    const challengeMode=g.stage==="challenge"||!!g.challenge?.startedAt;
+    const ch=challengeMode?liveChallengeSnapshot(g):null;
+    const records=g.phase==="tutorial"?(g.tutorialExperiments||[]):(g.experiments||[]);
+    const last=records.at(-1);
+    const curve=challengeMode?(ch?.curve||[]):(g.current?.curve||last?.curve||[]);
+    const point=curve.at(-1)||{};
+    return {
+      challengeMode,ch,records,curve,point,
+      conditions:challengeMode?(ch?.conditions||{}):(g.current?.conditions||last?.conditions||{}),
+      reason:challengeMode?(ch?.reason||""):(g.current?.reason||last?.reason||""),
+      minute:challengeMode?(ch?.minute??0):(g.current?.minute??point.minute??0)
+    };
+  }
+  function refreshDetailLive(){
+    if(!detailKey||$("groupModal").classList.contains("hidden"))return;
+    const g=groups.get(detailKey);
+    if(!g){closeGroupDetail();return;}
+    // Respect the current class filter even if class tabs change while the modal is open.
+    if(filter!=="ALL"&&g.classId!==filter){closeGroupDetail();return;}
+    const snap=groupExperimentSnapshot(g),c=snap.conditions,p=snap.point;
+    const live=!!(g.current||snap.challengeMode&&snap.ch?.startedAt&&!snap.ch?.done);
+    const put=(id,value)=>{const e=$(id);if(e)e.textContent=value;};
+    put("teacherDetailStage",stageName(g.stage,g.phase)+(live?" · 실험 진행 중":" · 관찰"));
+    put("teacherDetailTime",snap.minute+" / 30 min");
+    put("teacherDetailCo2",Number(snap.challengeMode?snap.ch?.co2??p.co2:p.co2||0).toFixed(1)+" mL");
+    put("teacherDetailO2",Number(p.o2||0).toFixed(1)+" mL");
+    put("teacherDetailEthanol",Number(p.ethanol||0).toFixed(2)+" %");
+    put("teacherDetailATP",Number(p.atpMmol||0).toFixed(1)+" mmol");
+    put("teacherDetailConditions",formatConditions(c));
+    put("teacherDetailReason",snap.reason||"현재 작성 중인 이유가 없습니다.");
+    put("teacherDetailUpdated",g.updatedAt?"마지막 수신 "+timeAgo(g.updatedAt):"아직 실험 데이터가 없습니다.");
+    const vessel=$("teacherDetailLiquid");
+    if(vessel)vessel.style.opacity=Number(c.yeast||0)>0?".95":".25";
+    const graph=$("detailGraph");
+    if(graph){
+      let series=snap.records.map((e,i)=>({id:e.id||"prev"+i,curve:e.curve||[],color:e.color||YeastCharts.colors[i%YeastCharts.colors.length]}));
+      if(snap.challengeMode){
+        series=snap.curve.length?[{id:"challenge",curve:snap.curve,color:"#26d9c7"}]:[];
+      }else if(g.current?.curve?.length){
+        series.push({id:"live",curve:g.current.curve,color:"#facc15"});
+      }
+      YeastCharts.drawSeries(graph,series);
+    }
   }
   function openDetail(g){
     if(!g)return;
-    const challengeMode=g.stage==="challenge"||g.challenge?.startedAt;
-    const liveChallenge=challengeMode?liveChallengeSnapshot(g):null;
-    const c=challengeMode?(liveChallenge?.conditions||{}):(g.current?.conditions||{});
-    const currentText=challengeMode?(liveChallenge?.reason||""):(g.current?.reason||"");
-    const detailRecords=g.phase==="tutorial"?(g.tutorialExperiments||[]):(g.experiments||[]);
-    const savedTutorial=g.tutorialExperiments||[];
-    const savedInquiry=g.experiments||[];
-    $("groupDetail").innerHTML=`<span class="step-kicker">${esc(g.classId)} CLASS · GROUP DETAIL</span><h2>${esc(g.group)}</h2>
-      <div class="detail-grid"><section><h3>현재 상태</h3><p>${stageName(g.stage,g.phase)} · ${challengeMode?(liveChallenge?.minute??0):(g.current?.minute??0)}/30 min</p><p>${formatConditions(c)}</p><p><b>작성 중:</b> ${esc(currentText)}</p>
-      <canvas id="detailGraph" width="720" height="330" style="width:100%;background:#06141f;border-radius:10px"></canvas></section>
-      <section><h3>공통 실험 기록 (${savedTutorial.length}회)</h3>${savedTutorial.map((e,i)=>{const f=e.curve?.at(-1)||{};return `<div class="detail-experiment"><b>공통 실험 ${i+1}${e.modelVersion?"":" (이전 모형)"}</b><br>${formatConditions(e.conditions)}<br>CO₂ ${Number(f.co2||0).toFixed(1)} mL</div>`}).join("")||"아직 기록 없음"}
-      <h3>자유탐구 기록 (${savedInquiry.length}회)</h3>${savedInquiry.map((e,i)=>{const f=e.curve?.at(-1)||{};return `<div class="detail-experiment" style="--card-color:${e.color||"#38bdf8"}"><b>실험 ${i+1}</b><br>${formatConditions(e.conditions)}<br>CO₂ ${Number(f.co2||0).toFixed(1)}mL · 에탄올 ${Number(f.ethanol||0).toFixed(2)}% · O₂ 소비 ${Number(f.o2||0).toFixed(1)}mL · ATP 환산 ${Number(f.atpMmol||0).toFixed(1)}mmol<br>이유: ${esc(e.reason)}</div>`}).join("")||"아직 기록 없음"}</section></div>
-      <hr style="border-color:#24445a"><h3>초기 가설</h3><p>${esc(g.hypothesis||"아직 작성 전")}</p><h3>생각 변화 기록</h3><p>${esc(g.reflection?.changedThinking||"아직 작성 전")}</p><p><b>현재 설명:</b> ${esc(g.reflection?.currentExplanation||"아직 작성 전")}</p><div class="detail-delete-row"><button id="deleteDetailGroupBtn" class="detail-delete-btn" type="button">이 모둠 데이터 삭제</button></div>`;
+    detailKey=g.key;
+    const tutorial=g.tutorialExperiments||[],inquiry=g.experiments||[];
+    $("groupDetail").innerHTML=`
+      <span class="step-kicker">${esc(window.YeastClassLabel(g.classId))} · LIVE GROUP MONITOR</span>
+      <h2>${esc(g.group)} 모둠 실험 확대 화면</h2>
+      <p class="teacher-detail-caption">실시간으로 전송된 실험값을 확대해 재구성한 화면입니다. 학생의 브라우저 화면을 직접 공유하는 방식은 아닙니다.</p>
+      <section class="teacher-detail-live">
+        <div class="teacher-detail-sensor">
+          <strong id="teacherDetailStage">실험 상태 확인 중</strong>
+          <div class="teacher-detail-tube" aria-label="효모 가상 실험 장면"><div class="teacher-detail-liquid" id="teacherDetailLiquid"></div></div>
+          <div class="teacher-detail-conditions" id="teacherDetailConditions">조건 확인 중</div>
+          <div class="teacher-detail-numbers">
+            <div><span>SIM TIME</span><strong id="teacherDetailTime">0 / 30 min</strong></div>
+            <div><span>CO₂ 누적</span><strong id="teacherDetailCo2">0.0 mL</strong></div>
+            <div><span>O₂ 소비</span><strong id="teacherDetailO2">0.0 mL</strong></div>
+            <div><span>에탄올</span><strong id="teacherDetailEthanol">0.00 %</strong></div>
+            <div><span>ATP 환산</span><strong id="teacherDetailATP">0.0 mmol</strong></div>
+          </div>
+        </div>
+        <div class="teacher-detail-chart">
+          <h3>실시간 CO₂ 발생량 그래프</h3>
+          <canvas id="detailGraph" width="940" height="410" aria-label="모둠 실시간 이산화탄소 발생량 그래프"></canvas>
+          <p class="teacher-detail-caption" id="teacherDetailUpdated">데이터 동기화 중</p>
+          <p><b>모둠 선택 이유 / 진행 상황</b></p>
+          <p class="teacher-detail-conditions" id="teacherDetailReason"></p>
+        </div>
+      </section>
+      <div class="teacher-detail-records">
+        <section><h3>공통 실험 기록 (${tutorial.length}회)</h3>
+        ${tutorial.map((e,i)=>{const f=e.curve?.at(-1)||{};return `<div class="detail-experiment"><b>실험 ${i+1}${e.modelVersion?"":" · 이전 모형"}</b><p>${formatConditions(e.conditions)}</p><p>CO₂ ${Number(f.co2||0).toFixed(1)} mL · O₂ ${Number(f.o2||0).toFixed(1)} mL</p></div>`}).join("")||"아직 기록 없음"}
+        </section>
+        <section><h3>자유탐구 기록 (${inquiry.length}회)</h3>
+        ${inquiry.map((e,i)=>{const f=e.curve?.at(-1)||{};return `<div class="detail-experiment" style="--card-color:${e.color||"#38bdf8"}"><b>실험 ${i+1}</b><p>${formatConditions(e.conditions)}</p><p>CO₂ ${Number(f.co2||0).toFixed(1)} mL · 에탄올 ${Number(f.ethanol||0).toFixed(2)}% · O₂ ${Number(f.o2||0).toFixed(1)} mL</p><p>${esc(e.reason||"")}</p></div>`}).join("")||"아직 기록 없음"}
+        </section>
+      </div>
+      <div class="teacher-detail-summary"><strong>초기 가설</strong><p>${esc(g.hypothesis||"아직 작성 전")}</p><strong>생각 변화</strong><p>${esc(g.reflection?.changedThinking||"아직 작성 전")}</p><strong>현재 설명</strong><p>${esc(g.reflection?.currentExplanation||"아직 작성 전")}</p></div>
+      <div class="detail-delete-row"><button id="deleteDetailGroupBtn" class="detail-delete-btn" type="button">이 모둠 데이터 삭제</button></div>`;
     $("groupModal").classList.remove("hidden");
-    setTimeout(()=>{
-      if(challengeMode && liveChallenge?.curve?.length){
-        YeastCharts.drawSeries($("detailGraph"),[{id:"challenge",curve:liveChallenge.curve,color:"#26d9c7"}])
-      }else{
-        YeastCharts.drawSeries($("detailGraph"),detailRecords)
-      }
-    },20);
-    setTimeout(()=>{
-      const delBtn=$("deleteDetailGroupBtn");
-      if(delBtn) delBtn.addEventListener("click",async()=>{
-        const ok=window.confirm(`${window.YeastClassLabel(g.classId)} · ${g.group} 모둠의 데이터를 삭제할까요?`);
-        if(!ok)return;
-        delBtn.disabled=true;
-        delBtn.textContent="삭제 중…";
-        await YeastCloud.deleteGroup(g);
-        groups.delete(g.key);
-        $("groupModal").classList.add("hidden");
-        render();
-      })
-    },0)
+    refreshDetailLive();
+    $("deleteDetailGroupBtn")?.addEventListener("click",async()=>{
+      if(!window.confirm(`${window.YeastClassLabel(g.classId)} · ${g.group} 모둠의 데이터를 삭제할까요?`))return;
+      $("deleteDetailGroupBtn").disabled=true;
+      await YeastCloud.deleteGroup(g);
+      groups.delete(g.key);closeGroupDetail();render();
+    });
   }
-  $("closeModalBtn").addEventListener("click",()=>$("groupModal").classList.add("hidden"));
-  $("groupModal").addEventListener("click",e=>{if(e.target===$("groupModal"))$("groupModal").classList.add("hidden")});
+  $("closeModalBtn").addEventListener("click",closeGroupDetail);
+  $("groupModal").addEventListener("click",e=>{if(e.target===$("groupModal"))closeGroupDetail()});
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&detailKey)closeGroupDetail()});
   function YeastSimName(k){return({glucose:"포도당",sucrose:"설탕",fructose:"과당",starch:"전분",none:"유기물 없음"}[k]||"조건 미설정")}
   function formatConditions(c){if(!c||!c.substrate)return"조건 미설정";return `${YeastSimName(c.substrate)} · ${c.oxygen==="on"?"산소 공급":"산소 공급 없음"} · 당 ${c.sugar}% · ${c.temp}℃ · 효모 ${Number(c.yeast).toFixed(1)}g`}
   function timeAgo(ts){if(!ts)return"-";const s=Math.round((Date.now()-ts)/1000);return s<5?"방금 전":s<60?`${s}초 전`:`${Math.round(s/60)}분 전`}
