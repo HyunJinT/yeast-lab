@@ -25,7 +25,7 @@
     const pair = matchPair(items);
     const hasOff = items.some(e => e.conditions?.oxygen === "off");
     const hasOn = items.some(e => e.conditions?.oxygen === "on");
-    const completed = group?.stage === "report" || group?.stage === "challenge";
+    const completed = !!group?.reflection?.reportCompleted || group?.stage === "report" || group?.stage === "challenge";
     const label = pair ? "산소 비교 완료" : hasOff && hasOn ? "변인 통제 확인 필요" :
       hasOff ? "산소 없음 실험 완료" : hasOn ? "산소 공급 실험 완료" : "비교 실험 시작 전";
     return {pair, label, completed};
@@ -162,9 +162,15 @@
     changeText("#joinView .briefing ol li:nth-child(4)","실험 결과를 바탕으로 새로운 궁금증을 찾아봅니다.",oxygen);
     changeText("#hypothesisView .hypothesis-step-card h2","산소의 유무에 따라 CO₂ 발생량은 어떻게 달라질까요?",oxygen);
     changeText("#hypothesisView .hypothesis-guide","산소 공급 여부를 조작 변인으로 정하고, 예상 결과와 이유가 드러나도록 가설을 작성하세요.",oxygen);
+    const hypothesisInput = $("hypothesisInput");
+    if(hypothesisInput){
+      if(!originals.has("hypothesis-placeholder")) originals.set("hypothesis-placeholder",hypothesisInput.placeholder);
+      const nextPlaceholder=oxygen ? "예: 산소를 공급하지 않으면 효모의 CO₂ 발생량은 줄어들 것이다. 왜냐하면 ________이기 때문이다." : originals.get("hypothesis-placeholder");
+      if(hypothesisInput.placeholder!==nextPlaceholder) hypothesisInput.placeholder=nextPlaceholder;
+    }
     changeText("#hypothesisView .hypothesis-question-box strong","산소의 유무에 따라 효모의 CO₂ 발생량은 어떻게 달라질까?",oxygen);
     changeText("#hypothesisView .hypothesis-frame p","산소를 공급하지 않으면 효모의 CO₂ 발생량은 ________할 것이다. 왜냐하면 ________이기 때문이다.",oxygen);
-    changeText("#labView .relative-index-note","※ CO₂와 O₂ 소비량은 교육용 모델의 추정값입니다. 산소 공급 여부만 변경한 비교 실험을 수행하고, 다른 대사 지표는 교사의 공개 이후 확인하세요. 실제 실험 결과와 차이가 있을 수 있습니다.",oxygen);
+    changeText("#labView .relative-index-note",reveal===0 ? "※ CO₂와 O₂ 소비량은 교육용 모델의 추정값입니다. 산소 공급 여부만 변경한 비교 실험을 수행하세요. 다른 대사 지표는 교사의 공개 이후 확인할 수 있습니다." : reveal===1 ? "※ CO₂·O₂는 교육용 추정값, ATP는 대사경로의 이론적 수율로 계산한 누적 환산량입니다. ATP는 세포에 저장된 양이 아닙니다." : "※ CO₂·O₂·에탄올은 교육용 추정값이며, ATP는 이론적 수율에 따른 누적 환산량입니다. 실제 실험 결과와는 차이가 있습니다.",oxygen);
     changeText("#reportView #researchPoster .poster-col:first-child article:first-child p","산소의 유무에 따라 효모의 CO₂ 발생량은 어떻게 달라질까?",oxygen);
     changeText("#reflectionView label[for=unexpected]","실험 결과가 처음 예상과 같았나요, 달랐나요?",oxygen);
     changeText("#reflectionView label[for=changedThinking]","실험 후 처음 생각이 어떻게 달라지거나 확실해졌나요?",oxygen);
