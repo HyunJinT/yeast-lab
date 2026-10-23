@@ -3445,22 +3445,24 @@ window.YEAST_FIREBASE_CONFIG = {
       .filter(g=>filter==="ALL"||g.classId===filter)
       .sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0))
   }
+  // Show only measurements actually reported by the student's app.
+  // Never advance a teacher chart using the teacher computer's clock.
   function liveChallengeSnapshot(g){
     const ch=g?.challenge;
-    if(!ch?.startedAt || !ch?.conditions) return ch||null;
-
-    const fullCurve=YeastSim.makeCurve(ch.conditions);
-    const elapsed=Math.max(0,Math.min(30,Math.floor((Date.now()-Number(ch.startedAt))/1000)));
-    const minute=ch.done ? Math.max(Number(ch.minute)||30,30) : elapsed;
-    const idx=Math.max(0,Math.min(30,minute));
-    const p=fullCurve[idx]||fullCurve.at(-1)||{co2:0};
+    if(!ch?.startedAt||!ch?.conditions)return ch||null;
+    const curve=Array.isArray(ch.curve)?ch.curve:[];
+    const last=curve.at(-1)||{};
     return {
       ...ch,
-      minute:idx,
-      co2:Number(p.co2||0),
-      curve:fullCurve.slice(0,idx+1),
-      done:!!ch.done || idx>=30
-    }
+      minute:Number(ch.minute??last.minute??0),
+      co2:Number(ch.co2??last.co2??0),
+      curve,
+      done:!!ch.done
+    };
+  }
+  function studentUpdateIsStale(g){
+    return !!(g && (g.current||g.challenge?.startedAt&&!g.challenge?.done) &&
+      g.updatedAt && Date.now()-Number(g.updatedAt)>6000);
   }
   function renderChallengeArena(all){
     const label=$("arenaClassLabel");
@@ -3482,11 +3484,11 @@ window.YEAST_FIREBASE_CONFIG = {
     arena.innerHTML=challengeGroups.map(g=>{
       const ch=liveChallengeSnapshot(g);
       const c=ch?.conditions||{};
-      const status=ch?.done?"완료":ch?.startedAt?"진행 중":"대기";
+      const status=ch?.done?"완료":studentUpdateIsStale(g)?"갱신 확인":ch?.startedAt?"진행 중":"대기";
       const cls=ch?.done?"done":ch?.startedAt?"running":"waiting";
       const minute=ch?.minute??0;
       const co2=Number(ch?.co2||0);
-      const reason=ch?.reason||"FINAL START 대기 중";
+      const reason=(ch?.reason||"FINAL START 대기 중")+(studentUpdateIsStale(g)?" · 최근 6초 이상 새 실험 데이터 없음":"");
       return `<article class="arena-card ${cls}" data-arena-key="${esc(g.key)}">
         <div class="arena-card-head">
           <h3>${esc(window.YeastClassLabel(g.classId))} · ${esc(g.group)}</h3>
@@ -3532,7 +3534,7 @@ window.YEAST_FIREBASE_CONFIG = {
       const minute=challengeMode?(liveChallenge?.minute??0):(g.current?.minute??0);
       const reason=challengeMode?(liveChallenge?.reason||"FINAL START 대기"):(g.current?.reason||recent?.at(-1)?.reason||"");
       return `<article class="group-card" role="button" tabindex="0" aria-label="${esc(window.YeastClassLabel(g.classId))} ${esc(g.group)} 모둠 실험 크게 보기" data-key="${esc(g.key)}"><div class="group-title"><h3>${esc(window.YeastClassLabel(g.classId))} · ${esc(g.group)}</h3><div class="group-card-actions"><span class="stage-tag">${stageName(g.stage,g.phase)}</span><button type="button" class="group-delete-btn" data-delete-key="${esc(g.key)}" title="이 모둠 데이터 삭제">삭제</button></div></div>
-      <div class="group-meta">공통 ${g.tutorialExperiments?.length||0}회 · 탐구 ${g.experiments?.length||0}회 · ${timeAgo(g.updatedAt)}${window.YeastLesson?.teacherBadge(g)||""}</div>
+      <div class="group-meta">공통 ${g.tutorialExperiments?.length||0}회 · 탐구 ${g.experiments?.length||0}회 · ${timeAgo(g.updatedAt)}${studentUpdateIsStale(g)?" · ⚠ 데이터 갱신 확인 필요":""}${window.YeastLesson?.teacherBadge(g)||""}</div>
       <div class="group-conditions"><span>${YeastSimName(c.substrate)}</span><span>${c.oxygen==="on"?"산소 공급":"산소 공급 없음"}</span><span>${c.sugar??"-"}%</span><span>${c.temp??"-"}℃</span><span>효모 ${c.yeast!=null?Number(c.yeast).toFixed(1):"-"}g</span></div>
       <canvas class="mini-canvas" width="360" height="100" data-curve="${esc(g.key)}"></canvas>
       <div class="typing-preview">현재 ${minute}/30 min · CO₂ ${Number(co2).toFixed(1)} mL · “${esc(reason)}”</div></article>`
@@ -3601,7 +3603,7 @@ window.YEAST_FIREBASE_CONFIG = {
     put("teacherDetailATP",Number(p.atpMmol||0).toFixed(1)+" mmol");
     put("teacherDetailConditions",formatConditions(c));
     put("teacherDetailReason",snap.reason||"현재 작성 중인 이유가 없습니다.");
-    put("teacherDetailUpdated",g.updatedAt?"마지막 수신 "+timeAgo(g.updatedAt):"아직 실험 데이터가 없습니다.");
+    put("teacherDetailUpdated",g.updatedAt?"마지막 수신 "+timeAgo(g.updatedAt)+(studentUpdateIsStale(g)?" · 최근 6초 이상 새 데이터 없음":""):"아직 실험 데이터가 없습니다.");
     const vessel=$("teacherDetailLiquid");
     if(vessel)vessel.style.opacity=Number(c.yeast||0)>0?".95":".25";
     const graph=$("detailGraph");
