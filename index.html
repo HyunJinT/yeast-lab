@@ -1334,7 +1334,10 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
       <button id="goReflectionBtn" class="secondary-btn" type="button">생각 변화 정리 →</button>
     </div>
 
-    <div id="tutorialGuide"><b>실험 1 · 산소 유무 비교</b><p>포도당 · 당 농도 5% · 30℃ · 건조효모 1.0 g은 고정입니다. 산소 공급 여부만 바꾸어 CO₂ 발생량을 비교해 보세요. 가설은 이후 탐구 실행하기에서 작성합니다.</p></div>
+    <div id="tutorialGuide"><b>실험 1 · 산소호흡과 알코올 발효 비교 (교육용 단순화 모형)</b>
+    <p>포도당 · 당 농도 5% · 30℃ · 건조효모 1.0 g은 고정입니다. 산소 공급 여부만 바꾸어 CO₂ 발생량을 비교해 보세요. 가설은 이후 탐구 실행하기에서 작성합니다.</p>
+    <p><b>이번 단계만</b> 두 조건에서 같은 양의 포도당을 분해하고, 산소가 있으면 완전한 산소호흡, 없으면 알코올 발효만 진행한다고 가정합니다. 포도당 1분자당 CO₂는 각각 6분자·2분자입니다. <b>그래프의 mL 값은 실제 측정값이 아닌 수업용 가정에 따른 계산값</b>입니다. 실제 효모는 산소가 있어도 고농도 포도당에서 발효할 수 있습니다.</p>
+  </div>
     <div class="lab-layout">
       <section class="glass panel scene-panel">
         <div class="panel-head"><b>실험 장면</b><span>LIVE SIMULATION</span></div>
@@ -1848,7 +1851,50 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     return {qGlc:12.3,qO2:2.5,catabolicShare:.82}
   }
 
+  /*
+   * TUTORIAL ONLY — comparison of IDEALIZED metabolic pathways.
+   * Equal moles of glucose equivalents are catabolized in the two conditions.
+   * Aerobic: C6H12O6 + 6 O2 -> 6 CO2 + 6 H2O, ~30 ATP.
+   * Anaerobic: C6H12O6 -> 2 CO2 + 2 ethanol, 2 ATP.
+   * This is a stoichiometric teaching model, NOT a prediction that
+   * 5% glucose S. cerevisiae respires exclusively in the presence of O2.
+   * At high glucose it may ferment aerobically (Crabtree effect).
+   */
+  function tutorialPathwayOutcomes(c){
+    const initialG=initialSugarG(c);
+    const availableEq=glucoseEquivalentMmolAvailable(c);
+    const yeast=Math.max(0,Number(c.yeast)||0);
+    const factors=temperatureFactor(Number(c.temp)||0)*
+      substrateFactor(c.substrate)*sugarFactor(Number(c.sugar)||0)/
+      sugarFactor(5)*interactionFactor(c);
+    // Reference example: 0.85 mmol glucose equivalents consumed per 30 min
+    // at 1.0 g yeast, 5% glucose, 30 C in 20 mL.
+    // 0.85 mmol is a chosen classroom reference, not a measured rate.
+    const catabolizedEq=Math.min(availableEq,
+      Math.max(0,0.85*yeast*Math.max(0,factors)));
+    const respiration=c.oxygen==="on";
+    const co2Mmol=catabolizedEq*(respiration?6:2);
+    const oxygenMmol=respiration?co2Mmol:0;
+    const ethanolMmol=respiration?0:catabolizedEq*2;
+    const atpMmol=catabolizedEq*(respiration?30:2);
+    const consumedG=Math.min(initialG,sugarConsumedG(c,catabolizedEq));
+    const usedPct=initialG>0?clamp(consumedG/initialG*100,0,100):0;
+    const ethanolMl=ethanolMmol*46.068/1000/ETHANOL_DENSITY_G_ML;
+    return {
+      co2:+(co2Mmol*GAS_ML_PER_MMOL).toFixed(2),
+      o2:+(oxygenMmol*GAS_ML_PER_MMOL).toFixed(2),
+      ethanol:+(ethanolMl/VOLUME_ML*100).toFixed(3),
+      atp:+clamp(atpMmol/40*100,0,100).toFixed(1),
+      atpMmol:+atpMmol.toFixed(2),
+      used:+usedPct.toFixed(1),
+      remaining:+(100-usedPct).toFixed(1),
+      remainingG:+Math.max(0,initialG-consumedG).toFixed(3),
+      consumedG:+consumedG.toFixed(3)
+    };
+  }
+
   function finalOutcomes(c){
+    if(c.model==="pathway-v2")return tutorialPathwayOutcomes(c);
     const yeast=Math.max(0,Number(c.yeast)||0);
     const sugar=Math.max(0,Number(c.sugar)||0);
     const temp=Number(c.temp)||0;
@@ -2298,6 +2344,13 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     }
     if(demo){for(const [k,v] of Object.entries({substrate:"glucose",sugar:"5",temp:"30",yeast:"1"})){controls[k].value=v;controls[k].disabled=true}}
     else if(!running){for(const k of ["substrate","sugar","temp","yeast"])controls[k].disabled=false}
+    const note=$("labView")?.querySelector(".relative-index-note");
+    if(note){
+      if(!window.YeastDefaultModelNote)window.YeastDefaultModelNote=note.textContent;
+      note.textContent=demo
+        ?"※ 공통 실험: 동일한 양의 포도당이 완전히 산소호흡 또는 알코올 발효로 분해된다는 가정에서 계산한 교육용 수치입니다. 30분간 기체 발생량은 실측 예측이 아닙니다. 실제 효모는 산소가 있어도 발효를 병행할 수 있습니다."
+        :window.YeastDefaultModelNote;
+    }
     refreshClassroomGates();
   }
   function show(id){
@@ -2567,7 +2620,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
       $("runBtn").textContent=locked?"실험 진행 중…":"실험 시작";
     }
   }
-  function currentConditions(){return {substrate:controls.substrate.value,oxygen:controls.oxygen.value,sugar:+controls.sugar.value,temp:+controls.temp.value,yeast:+controls.yeast.value}}
+  function currentConditions(){return {substrate:controls.substrate.value,oxygen:controls.oxygen.value,sugar:+controls.sugar.value,temp:+controls.temp.value,yeast:+controls.yeast.value,model:isTutorial()?"pathway-v2":"physiological-v1"}}
   function updateControlLabels(){
     $("sugarOut").textContent=controls.sugar.value+"%";$("tempOut").textContent=controls.temp.value+"℃";$("yeastOut").textContent=(+controls.yeast.value).toFixed(1)+" g";
     const prev=activeExperiments().at(-1)?.conditions, cur=currentConditions(), changed=YeastSim.diff(prev,cur);
@@ -2696,10 +2749,10 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
       return
     }
     box.innerHTML=records.map((e,i)=>{
-      const f=e.curve.at(-1),c=e.conditions,d=e.changed.join(" · ");
+      const f=e.curve.at(-1),c=e.conditions,d=e.changed.join(" · "),legacy=!e.modelVersion&&!(e.conditions||{}).model;
       return `<article class="log-card" data-log-index="${i}" style="--card-color:${e.color}">
         <button class="log-summary" type="button" aria-expanded="false">
-          <span class="log-summary-left"><span class="color-dot" style="--dot:${e.color}"></span>실험 ${i+1}</span>
+          <span class="log-summary-left"><span class="color-dot" style="--dot:${e.color}"></span>실험 ${i+1}${legacy?" · 이전 모형 결과":""}</span>
           <span class="log-chevron">⌄</span>
         </button>
         <div class="log-details">
@@ -2763,7 +2816,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     setExperimentControlsLocked(true);
     const records=activeExperiments();
     const c=currentConditions(), prev=records.at(-1)?.conditions, changed=YeastSim.diff(prev,c), curve=YeastSim.makeCurve(c); if($("bubbleLayer")) $("bubbleLayer").replaceChildren();
-    const exp={id:`e${Date.now()}`,conditions:c,changed,reason,curve,color:colors[records.length%colors.length],phase:state.phase,createdAt:Date.now()};
+    const exp={id:`e${Date.now()}`,conditions:c,changed,reason,curve,color:colors[records.length%colors.length],phase:state.phase,modelVersion:c.model,createdAt:Date.now()};
     state.current={conditions:c,reason,minute:0,co2:0};sync();
     let minute=0;
     timer=setInterval(()=>{
