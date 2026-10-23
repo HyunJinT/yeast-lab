@@ -48,6 +48,7 @@ body.lesson-tutorial #runBtn{min-width:160px}
 #lessonTeacherPanel .challenge-toggle>span{font-size:.9rem;font-weight:700}
 #lessonTeacherPanel .challenge-toggle>strong{font-size:.86rem;font-weight:800}
 #lessonTeacherPanel .lesson-teacher-card>p{margin:8px 0 0}
+@media(min-width:1450px){.lesson-teacher-grid:not(.single-class) .lesson-stage-buttons{grid-template-columns:repeat(3,minmax(0,1fr))}.lesson-teacher-grid:not(.single-class) .lesson-teacher-card{padding:11px}}
 @media(max-width:900px){.lesson-teacher-grid.single-class .lesson-stage-buttons{grid-template-columns:1fr}}
 @media(max-width:720px){#inquiryGateBtn{padding:8px 9px;font-size:11px}.lesson-wait-card{padding:20px}.lesson-teacher-panel{padding:13px}}
 `;
