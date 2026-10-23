@@ -2888,7 +2888,7 @@ window.YEAST_FIREBASE_CONFIG = {
   function cancelExperimentConfirm(){
     pendingExperiment=null;
     hideExperimentConfirm();
-    $("runBtn")?.focus();
+    (state.stage==="challenge"?$("challengeRunBtn"):$("runBtn"))?.focus();
   }
   function validateExperimentStart(){
     if(running)return false;
@@ -2911,14 +2911,11 @@ window.YEAST_FIREBASE_CONFIG = {
     $("labMessage").textContent="";
     return true;
   }
-  function confirmExperimentStart(){
-    if(!validateExperimentStart()||pendingExperiment)return;
-    const conditions=currentConditions();
-    const reason=isTutorial()
-      ?("공통 실험: 산소 공급 "+(conditions.oxygen==="on"?"있음":"없음"))
-      :$("reasonInput").value.trim();
-    // Freeze the reviewed values; cancelling does not reset the user's selections.
-    pendingExperiment={conditions:{...conditions},reason,phase:state.phase};
+  function openExperimentConfirmation(request){
+    if(pendingExperiment||running||!request)return;
+    // Keep a snapshot of the exact settings reviewed in the popup.
+    pendingExperiment=request;
+    const conditions=request.conditions;
     const detail=[
       ["유기물",YeastSim.substrateName[conditions.substrate]||"없음"],
       ["산소 공급",conditions.oxygen==="on"?"있음":"없음"],
@@ -2926,6 +2923,8 @@ window.YEAST_FIREBASE_CONFIG = {
       ["온도",conditions.temp+"℃"],
       ["효모량",Number(conditions.yeast).toFixed(1)+" g"]
     ];
+    $("experimentConfirmTitle").textContent=request.mode==="challenge"
+      ?"최종 게임 챌린지 조건 확인":"실험 조건 확인";
     const list=$("experimentConfirmList");
     list.replaceChildren();
     detail.forEach(([name,value])=>{
@@ -2938,6 +2937,14 @@ window.YEAST_FIREBASE_CONFIG = {
     modal.classList.remove("hidden");
     modal.setAttribute("aria-hidden","false");
     $("experimentConfirmNoBtn").focus();
+  }
+  function confirmExperimentStart(){
+    if(!validateExperimentStart()||pendingExperiment)return;
+    const conditions=currentConditions();
+    const reason=isTutorial()
+      ?("공통 실험: 산소 공급 "+(conditions.oxygen==="on"?"있음":"없음"))
+      :$("reasonInput").value.trim();
+    openExperimentConfirmation({mode:"lab",conditions:{...conditions},reason,phase:state.phase});
   }
   function runConfirmedExperiment(request){
     if(running||!request||request.phase!==state.phase)return;
@@ -2975,7 +2982,8 @@ window.YEAST_FIREBASE_CONFIG = {
     const request=pendingExperiment;
     pendingExperiment=null;
     hideExperimentConfirm();
-    runConfirmedExperiment(request);
+    if(request?.mode==="challenge")runConfirmedChallenge(request);
+    else if(request?.mode==="lab")runConfirmedExperiment(request);
   });
   // Escape and backdrop dismissal have the same non-destructive effect as '아니오'.
   $("experimentConfirmModal").addEventListener("click",event=>{
@@ -3221,84 +3229,62 @@ window.YEAST_FIREBASE_CONFIG = {
     refreshChallengeGate();
     if(!challengeUnlocked){
       showWarning("교사가 아직 최종 게임 챌린지를 활성화하지 않았습니다.");
-      return
+      return;
     }
     if(state.challenge?.startedAt){
       showWarning("FINAL CHALLENGE는 모둠당 1회만 가능합니다. 이미 도전을 시작했습니다.");
       updateChallengeAttemptUI();
-      return
+      return;
     }
-    if(running)return;
-
+    if(running||pendingExperiment)return;
     const reason=$("challengeReason").value.trim();
     if(!reason){
       $("challengeReasonWrap")?.classList.add("required-error");
       $("challengeReasonError")?.classList.remove("hidden");
-      showWarning("최종 조건 선택 근거가 비어 있습니다.\n앞선 탐구 결과를 근거로 선택 이유를 입력한 뒤 다시 FINAL START를 눌러주세요.","challengeReason");
+      showWarning("최종 조건 선택 근거가 비어 있습니다.\\n앞선 탐구 결과를 근거로 선택 이유를 입력한 뒤 다시 FINAL START를 눌러주세요.","challengeReason");
       setTimeout(()=>$("challengeReason")?.focus(),120);
-      return
+      return;
     }
-
     $("challengeReasonWrap")?.classList.remove("required-error");
     $("challengeReasonError")?.classList.add("hidden");
-
-    const c={
+    const conditions={
       substrate:$("challengeSubstrate").value,
       oxygen:$("challengeOxygen").value,
       sugar:+$("challengeSugar").value,
       temp:+$("challengeTemp").value,
       yeast:+$("challengeYeast").value
     };
+    openExperimentConfirmation({mode:"challenge",conditions,reason,phase:state.phase});
+  });
+  function runConfirmedChallenge(request){
+    refreshChallengeGate();
+    if(!request||request.mode!=="challenge"||request.phase!=="challenge"||
+       state.phase!==request.phase||!challengeUnlocked||state.challenge?.startedAt||running)return;
+    const c=request.conditions,reason=request.reason;
     const curve=YeastSim.makeCurve(c);
-
     running=true;
     const startedAt=Date.now();
     state.stage="challenge";
-    state.challenge={
-      startedAt,
-      conditions:c,
-      reason,
-      minute:0,
-      co2:0,
-      curve:[],
-      done:false
-    };
-    save();
-    updateChallengeAttemptUI();
+    state.challenge={startedAt,conditions:c,reason,minute:0,co2:0,curve:[],done:false};
+    save();updateChallengeAttemptUI();
 
     let m=0;
     const t=setInterval(()=>{
       const p=curve[m];
       $("challengeTime").textContent=p.minute+" min";
       $("challengeCO2").textContent=p.co2.toFixed(1)+" mL";
-
-      state.challenge={
-        startedAt,
-        conditions:c,
-        reason,
-        minute:m,
-        co2:p.co2,
-        curve:curve.slice(0,m+1),
-        done:m===30
-      };
-
-      YeastCharts.drawSeries(
-        $("challengeGraph"),
-        [{id:"c",curve,color:"#26d9c7"}],
-        {c:m+1}
-      );
+      state.challenge={startedAt,conditions:c,reason,minute:m,co2:p.co2,curve:curve.slice(0,m+1),done:m===30};
+      YeastCharts.drawSeries($("challengeGraph"),[{id:"c",curve,color:"#26d9c7"}],{c:m+1});
       save();
-
       if(m>=30){
         clearInterval(t);
         running=false;
         $("challengeResult").innerHTML=`FINAL CHALLENGE 완료 · 최종 CO₂ <b>${p.co2.toFixed(1)} mL</b> · ${YeastSim.substrateName[c.substrate]} · ${c.oxygen==="on"?"산소 공급":"산소 없음"} · 당 ${c.sugar}% · ${c.temp}℃ · 효모 ${Number(c.yeast).toFixed(1)} g · 다시 도전할 수 없습니다.`;
-        save();
-        updateChallengeAttemptUI();
+        save();updateChallengeAttemptUI();
       }
-      m++
-    },1000)
-  });
+      m++;
+    },1000);
+  }
   function escapeHtml(s){return String(s||"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]))}
   window.addEventListener("beforeunload",()=>{if(timer)clearInterval(timer)});
   restore()
