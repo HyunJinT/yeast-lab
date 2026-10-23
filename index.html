@@ -1132,6 +1132,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
 <header class="single-top">
   <div class="brand"><span class="brand-avatar"><img data-hyunjin-avatar alt="초미녀현진쌤 얼굴 캐릭터"></span><b>초미녀현진쌤과 함께하는 세포와 물질대사</b></div>
   <div class="top-header-actions">
+    <button id="inquiryGateBtn" type="button" disabled>🔒 탐구 실행하기</button>
     <button id="topResetBtn" class="top-reset-btn" type="button">초기화시키기</button>
     <button id="topHomeBtn" class="top-home-btn" type="button">처음으로</button>
   </div>
@@ -1240,6 +1241,16 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     </div>
   </section>
 
+  <section id="waitingView" class="view">
+    <div class="view-head"><div><span class="step-kicker">CLASSROOM WAITING</span><h1>선생님의 안내를 기다려 주세요</h1><p>입장이 완료되었습니다. 교사가 해당 반의 튜토리얼을 열어주면 실험을 시작할 수 있습니다.</p></div></div>
+    <section class="glass lesson-wait-card">
+      <span class="step-kicker">READY TO EXPERIMENT</span>
+      <h2>실험실 입장 완료!</h2><p id="waitingIdentity"></p>
+      <div id="tutorialWaitStatus" class="lesson-wait-status" aria-live="polite">🔒 튜토리얼 오픈을 기다리는 중</div>
+      <button id="tutorialStartBtn" class="primary-btn full" disabled type="button">🔒 실험하러 가기 · 대기 중</button>
+      <p class="model-note">선생님이 해당 반을 활성화하면 버튼이 자동으로 열립니다.</p>
+    </section>
+  </section>
   <section id="hypothesisView" class="view">
     <div class="view-head">
       <div>
@@ -1323,6 +1334,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
       <button id="goReflectionBtn" class="secondary-btn" type="button">생각 변화 정리 →</button>
     </div>
 
+    <div id="tutorialGuide"><b>실험 1 · 산소 유무 비교</b><p>포도당 · 당 농도 5% · 30℃ · 건조효모 1.0 g은 고정입니다. 산소 공급 여부만 바꾸어 CO₂ 발생량을 비교해 보세요. 가설은 이후 탐구 실행하기에서 작성합니다.</p></div>
     <div class="lab-layout">
       <section class="glass panel scene-panel">
         <div class="panel-head"><b>실험 장면</b><span>LIVE SIMULATION</span></div>
@@ -2124,6 +2136,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
 
   function open(which){
     landing.classList.remove('active');
+    document.body.classList.toggle('student-mode',which==='student');
     sc.classList.toggle('hidden',which!=='student');
     tc.classList.toggle('hidden',which!=='teacher');
 
@@ -2146,6 +2159,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     sc.classList.add('hidden');
     tc.classList.add('hidden');
     landing.classList.add('active');
+    document.body.classList.remove('student-mode');
     window.scrollTo(0,0);
   }
 
@@ -2230,7 +2244,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     set(k,v){try{localStorage.setItem(k,v)}catch(e){}},
     remove(k){try{localStorage.removeItem(k)}catch(e){}}
   };
-  const defaults={classId:"",group:"",stage:"join",hypothesis:"",experiments:[],reflection:{},challenge:null,current:null};
+  const defaults={classId:"",group:"",joinedKey:"",stage:"join",phase:"waiting",hypothesis:"",tutorialExperiments:[],experiments:[],reflection:{},challenge:null,current:null};
   let state={...defaults}; let running=false, timer=null, challengeUnlocked=false, warningFocusId=null;
   window.YeastStudentReset=async function(){
     try{if(timer)clearInterval(timer)}catch(e){}
@@ -2252,11 +2266,40 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
   };
   try{state={...defaults,...JSON.parse(safeStorage.get(stateKey)||"{}")}}catch{}
   delete state.members;
+  state.tutorialExperiments=Array.isArray(state.tutorialExperiments)?state.tutorialExperiments:[];
+  if(!state.joinedKey&&state.classId&&state.group)state.joinedKey=state.classId+"-"+state.group;
+  if(!JSON.parse(safeStorage.get(stateKey)||"{}").phase)state.phase=(state.hypothesis||state.experiments.length)?"inquiry":"waiting";
   safeStorage.set(stateKey,JSON.stringify(state));
   state.reflection=state.reflection||{};
   if(!Array.isArray(state.reflection.selectedExperimentIds)) state.reflection.selectedExperimentIds=[];
   function save(){safeStorage.set(stateKey,JSON.stringify(state)); sync()}
   function key(){return `${state.classId}-${state.group}`.trim()}
+  function isTutorial(){return state.phase==="tutorial"}
+  function activeExperiments(){return isTutorial()?state.tutorialExperiments:state.experiments}
+  function refreshClassroomGates(){
+    const c=state.classId?YeastCloud.controlSnapshot(state.classId):{};
+    const open=!!c.tutorialOpen, start=$("tutorialStartBtn"), status=$("tutorialWaitStatus"), inquiry=$("inquiryGateBtn");
+    if(start){start.disabled=!open;start.textContent=open?"실험하러 가기 →":"🔒 실험하러 가기 · 대기 중"}
+    if(status)status.textContent=open?"🔓 튜토리얼 오픈! 실험하러 가기를 눌러주세요.":"🔒 선생님의 튜토리얼 오픈을 기다리는 중";
+    if($("waitingIdentity"))$("waitingIdentity").textContent=state.classId?state.classId+"반 · "+state.group:"";
+    if(inquiry){
+      inquiry.disabled=!state.classId||!state.group||!c.inquiryEnabled||running||state.phase==="inquiry";
+      inquiry.textContent=state.phase==="inquiry"?"✓ 탐구 진행 중":c.inquiryEnabled?"탐구 실행하기 →":"🔒 탐구 실행하기";
+    }
+  }
+  function applyPhaseUI(){
+    const demo=isTutorial();
+    document.body.classList.toggle("lesson-tutorial",demo);
+    const lab=$("labView");
+    if(lab){
+      lab.querySelector(".head-left h1").textContent=demo?"실험 1 · 산소 유무 비교":"효모 에너지 획득 가상실험";
+      lab.querySelector(".head-left .step-kicker").textContent=demo?"TUTORIAL · OXYGEN":"STEP 1 · FREE INQUIRY";
+      lab.querySelector(".head-left p").textContent=demo?"다른 조건은 고정한 채 산소 공급 여부만 바꾸어 실험합니다.":"한 번에 여러 조건을 바꿀 수 있지만, 결과 해석을 위해 바뀐 변인을 확인하세요.";
+    }
+    if(demo){for(const [k,v] of Object.entries({substrate:"glucose",sugar:"5",temp:"30",yeast:"1"})){controls[k].value=v;controls[k].disabled=true}}
+    else if(!running){for(const k of ["substrate","sugar","temp","yeast"])controls[k].disabled=false}
+    refreshClassroomGates();
+  }
   function show(id){
     views.forEach(v=>v.classList.toggle("active",v.id===id));
     state.stage=id.replace("View","");
@@ -2265,6 +2308,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     if(id==="reflectionView")renderReflection();
     if(id==="reportView")renderReport();
     if(id==="challengeView")updateChallengeAttemptUI();
+    applyPhaseUI();
   }
   function updateThinkerBell(){
     const btn=$("thinkerBellBtn");
@@ -2341,10 +2385,10 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
 
   function sync(extra={}){
     if(!state.classId||!state.group)return;
-    const last=state.experiments[state.experiments.length-1];
+    const records=activeExperiments(),last=records[records.length-1];
     YeastCloud.publish({
-      key:key(),classId:state.classId,group:state.group,stage:state.stage,
-      current:state.current,hypothesis:state.hypothesis,experiments:state.experiments,reflection:state.reflection,challenge:state.challenge,
+      key:key(),classId:state.classId,group:state.group,stage:state.stage,phase:state.phase,
+      current:state.current,hypothesis:state.hypothesis,tutorialExperiments:state.tutorialExperiments,experiments:state.experiments,reflection:state.reflection,challenge:state.challenge,
       latestCurve:last?.curve||[],updatedAt:Date.now(),...extra
     })
   }
@@ -2398,6 +2442,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
   YeastCloud.subscribeControlCloud(payload=>{
     if(payload?.classId===state.classId) applyChallengeGate(!!payload.challengeEnabled)
   });
+  YeastCloud.subscribeControlLocal(p=>{if(p?.classId===state.classId)refreshClassroomGates()});
   function updateHypothesisUI(){
     const input=$("hypothesisInput"), box=$("hypothesisBox"), status=$("hypothesisStatus"), btn=$("saveHypothesisBtn");
     if(!input)return;
@@ -2417,10 +2462,17 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     if(state.classId) document.querySelector(`[data-class="${state.classId}"]`)?.classList.add("active");
     $("groupName").value=state.group||"";
     $("studentIdentity").textContent=state.classId?`${state.classId}반 · ${state.group}`:"미입장";
-    if(state.classId&&state.group&&state.stage!=="join") show((state.stage||"lab")+"View"); else show("joinView");
+    if(state.classId&&state.group&&state.stage!=="join"){
+      const allowed=["waiting","hypothesis","lab","reflection","report","challenge"];
+      const to=state.phase==="waiting"?"waiting":allowed.includes(state.stage)?state.stage:"waiting";
+      show(to+"View");
+    }else show("joinView");
     renderLog();updateGraph();refreshChallengeGate();updateHypothesisUI();updateThinkerBell();updateChallengeAttemptUI()
   }
-  document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>show(b.dataset.go)));
+  document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>{
+    if((isTutorial()&&b.dataset.go==="hypothesisView")||(state.phase==="waiting"&&b.dataset.go!=="joinView"))return;
+    show(b.dataset.go)
+  }));
   document.querySelectorAll("[data-class]").forEach(b=>b.addEventListener("click",()=>{
     document.querySelectorAll("[data-class]").forEach(x=>x.classList.remove("active"));
     b.classList.add("active");
@@ -2471,8 +2523,27 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     $("studentIdentity").textContent=`${state.classId}반 · ${state.group}`;
     updateThinkerBell();
     refreshChallengeGate();
-    show("hypothesisView");
-    updateHypothesisUI();
+    const newKey=state.classId+"-"+state.group;
+    if(state.joinedKey!==newKey){
+      state.tutorialExperiments=[];state.experiments=[];state.hypothesis="";state.reflection={selectedExperimentIds:[]};
+      state.challenge=null;state.current=null;state.phase="waiting";state.joinedKey=newKey;
+    }
+    show("waitingView");
+    refreshClassroomGates();
+  });
+  $("tutorialStartBtn").addEventListener("click",()=>{
+    if($("tutorialStartBtn").disabled||running)return;
+    state.phase="tutorial";
+    controls.oxygen.value="off";
+    show("labView");updateControlLabels();renderLog();updateGraph();
+  });
+  $("inquiryGateBtn").addEventListener("click",()=>{
+    if($("inquiryGateBtn").disabled||running||!YeastCloud.controlSnapshot(state.classId).inquiryEnabled)return;
+    state.phase="inquiry";
+    state.experiments=[];state.hypothesis="";state.reflection={selectedExperimentIds:[]};state.challenge=null;state.current=null;
+    $("hypothesisInput").value="";$("reasonInput").value="";
+    $("reasonInputWrap")?.classList.remove("required-error");$("reasonInlineError")?.classList.add("hidden");
+    show("hypothesisView");updateHypothesisUI();renderLog();updateGraph();updateControlLabels();
   });
   const resetBtnEl=$("resetBtn"); if(resetBtnEl){resetBtnEl.addEventListener("click",()=>{if(confirm("이 기기의 학생 진행 기록을 초기화할까요?")){safeStorage.remove(stateKey);location.reload()}});}
   const controls={
@@ -2489,6 +2560,8 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
 
     zone?.classList.toggle("is-running",locked);
     overlay?.classList.toggle("hidden",!locked);
+    if(!locked&&isTutorial())for(const k of ["substrate","sugar","temp","yeast"])controls[k].disabled=true;
+    refreshClassroomGates();
 
     if($("runBtn")){
       $("runBtn").textContent=locked?"실험 진행 중…":"실험 시작";
@@ -2497,7 +2570,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
   function currentConditions(){return {substrate:controls.substrate.value,oxygen:controls.oxygen.value,sugar:+controls.sugar.value,temp:+controls.temp.value,yeast:+controls.yeast.value}}
   function updateControlLabels(){
     $("sugarOut").textContent=controls.sugar.value+"%";$("tempOut").textContent=controls.temp.value+"℃";$("yeastOut").textContent=(+controls.yeast.value).toFixed(1)+" g";
-    const prev=state.experiments.at(-1)?.conditions, cur=currentConditions(), changed=YeastSim.diff(prev,cur);
+    const prev=activeExperiments().at(-1)?.conditions, cur=currentConditions(), changed=YeastSim.diff(prev,cur);
     $("changedConditions").textContent=changed.join(" · ");$("multiVarWarning").classList.toggle("hidden",changed.filter(x=>x!=="첫 실험"&&x!=="변경 없음").length<2);
     $("substrateCaption").textContent=YeastSim.substrateName[cur.substrate];$("oxygenCaption").textContent=cur.oxygen==="on"?"산소 공급":"산소 공급 없음"
   }
@@ -2612,16 +2685,17 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     bubble(Math.min(1.5,(p.co2Rate||0)/6));
   }
   function updateGraph(progress={}){
-    YeastCharts.drawSeries($("mainGraph"),state.experiments,progress)
+    YeastCharts.drawSeries($("mainGraph"),activeExperiments(),progress)
   }
   function renderLog(){
-    $("trialCount").textContent=state.experiments.length+"회";
+    const records=activeExperiments();
+    $("trialCount").textContent=records.length+"회";
     const box=$("experimentLog");
-    if(!state.experiments.length){
+    if(!records.length){
       box.innerHTML='<div class="empty-state">첫 실험을 수행하면 실험 1, 실험 2 형태로 기록됩니다. 클릭하면 조건·선택 이유·결과를 펼쳐볼 수 있습니다.</div>';
       return
     }
-    box.innerHTML=state.experiments.map((e,i)=>{
+    box.innerHTML=records.map((e,i)=>{
       const f=e.curve.at(-1),c=e.conditions,d=e.changed.join(" · ");
       return `<article class="log-card" data-log-index="${i}" style="--card-color:${e.color}">
         <button class="log-summary" type="button" aria-expanded="false">
@@ -2666,12 +2740,13 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
   });
   $("runBtn").addEventListener("click",()=>{
     if(running)return;
-    if(!state.hypothesis){
+    const demo=isTutorial();
+    if(!demo&&!state.hypothesis){
       showWarning("초기 가설이 저장되지 않았습니다. 가설 작성 화면에서 먼저 가설을 입력하세요.");
       show("hypothesisView");updateHypothesisUI();return;
     }
-    const reason=$("reasonInput").value.trim();
-    if(!reason){
+    const reason=demo?("공통 실험: 산소 공급 "+(controls.oxygen.value==="on"?"있음":"없음")):$("reasonInput").value.trim();
+    if(!demo&&!reason){
       const wrap=$("reasonInputWrap"), err=$("reasonInlineError");
       wrap?.classList.add("required-error");
       err?.classList.remove("hidden");
@@ -2686,16 +2761,17 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     running=true;
     updateHypothesisUI();
     setExperimentControlsLocked(true);
-    const c=currentConditions(), prev=state.experiments.at(-1)?.conditions, changed=YeastSim.diff(prev,c), curve=YeastSim.makeCurve(c); if($("bubbleLayer")) $("bubbleLayer").replaceChildren();
-    const exp={id:`e${Date.now()}`,conditions:c,changed,reason,curve,color:colors[state.experiments.length%colors.length],createdAt:Date.now()};
+    const records=activeExperiments();
+    const c=currentConditions(), prev=records.at(-1)?.conditions, changed=YeastSim.diff(prev,c), curve=YeastSim.makeCurve(c); if($("bubbleLayer")) $("bubbleLayer").replaceChildren();
+    const exp={id:`e${Date.now()}`,conditions:c,changed,reason,curve,color:colors[records.length%colors.length],phase:state.phase,createdAt:Date.now()};
     state.current={conditions:c,reason,minute:0,co2:0};sync();
     let minute=0;
     timer=setInterval(()=>{
       const p=curve[minute];setLive(p,c);state.current={conditions:c,reason,minute,co2:p.co2,o2:p.o2,ethanol:p.ethanol,curve:curve.slice(0,minute+1)};sync();
-      const preview=[...state.experiments,exp];YeastCharts.drawSeries($("mainGraph"),preview,{[exp.id]:minute+1});
+      const preview=[...records,exp];YeastCharts.drawSeries($("mainGraph"),preview,{[exp.id]:minute+1});
       if(minute>=30){
         clearInterval(timer);
-        state.experiments.push(exp);
+        records.push(exp);
         state.current=null;
         running=false;
         setExperimentControlsLocked(false);
@@ -3104,7 +3180,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     if(teacherTicker)clearInterval(teacherTicker);
     teacherTicker=setInterval(()=>render(),1000)
   }
-  function stageName(s){return({join:"입장",lab:"자유 탐구",reflection:"생각 정리",report:"연구 결과",challenge:"챌린지"}[s]||s||"대기")}
+  function stageName(s,p){if(p==="waiting")return "오픈 대기";if(p==="tutorial")return "공통 실험";return({join:"입장",lab:"자유 탐구",hypothesis:"가설 작성",reflection:"생각 정리",report:"연구 결과",challenge:"챌린지"}[s]||s||"대기")}
   function filtered(){
     return [...groups.values()]
       .filter(g=>filter==="ALL"||g.classId===filter)
@@ -3191,12 +3267,13 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     grid.innerHTML=all.map(g=>{
       const challengeMode=g.stage==="challenge"||g.challenge?.startedAt;
       const liveChallenge=challengeMode?liveChallengeSnapshot(g):null;
-      const c=challengeMode?(liveChallenge?.conditions||{}):(g.current?.conditions||g.experiments?.at(-1)?.conditions||{});
-      const co2=challengeMode?(liveChallenge?.co2??0):(g.current?.co2??g.experiments?.at(-1)?.curve?.at(-1)?.co2??0);
+      const recent=g.phase==="tutorial"?g.tutorialExperiments:g.experiments;
+      const c=challengeMode?(liveChallenge?.conditions||{}):(g.current?.conditions||recent?.at(-1)?.conditions||{});
+      const co2=challengeMode?(liveChallenge?.co2??0):(g.current?.co2??recent?.at(-1)?.curve?.at(-1)?.co2??0);
       const minute=challengeMode?(liveChallenge?.minute??0):(g.current?.minute??0);
-      const reason=challengeMode?(liveChallenge?.reason||"FINAL START 대기"):(g.current?.reason||g.experiments?.at(-1)?.reason||"");
-      return `<article class="group-card" data-key="${esc(g.key)}"><div class="group-title"><h3>${esc(g.classId)}반 · ${esc(g.group)}</h3><div class="group-card-actions"><span class="stage-tag">${stageName(g.stage)}</span><button type="button" class="group-delete-btn" data-delete-key="${esc(g.key)}" title="이 모둠 데이터 삭제">삭제</button></div></div>
-      <div class="group-meta">실험 ${g.experiments?.length||0}회 · ${timeAgo(g.updatedAt)}${window.YeastLesson?.teacherBadge(g)||""}</div>
+      const reason=challengeMode?(liveChallenge?.reason||"FINAL START 대기"):(g.current?.reason||recent?.at(-1)?.reason||"");
+      return `<article class="group-card" data-key="${esc(g.key)}"><div class="group-title"><h3>${esc(g.classId)}반 · ${esc(g.group)}</h3><div class="group-card-actions"><span class="stage-tag">${stageName(g.stage,g.phase)}</span><button type="button" class="group-delete-btn" data-delete-key="${esc(g.key)}" title="이 모둠 데이터 삭제">삭제</button></div></div>
+      <div class="group-meta">공통 ${g.tutorialExperiments?.length||0}회 · 탐구 ${g.experiments?.length||0}회 · ${timeAgo(g.updatedAt)}${window.YeastLesson?.teacherBadge(g)||""}</div>
       <div class="group-conditions"><span>${YeastSimName(c.substrate)}</span><span>${c.oxygen==="on"?"산소 공급":"산소 공급 없음"}</span><span>${c.sugar??"-"}%</span><span>${c.temp??"-"}℃</span><span>효모 ${c.yeast!=null?Number(c.yeast).toFixed(1):"-"}g</span></div>
       <canvas class="mini-canvas" width="360" height="100" data-curve="${esc(g.key)}"></canvas>
       <div class="typing-preview">현재 ${minute}/30 min · CO₂ ${Number(co2).toFixed(1)} mL · “${esc(reason)}”</div></article>`
@@ -3205,7 +3282,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
       const cv=document.querySelector(`canvas[data-curve="${CSS.escape(g.key)}"]`);
       const challengeMode=g.stage==="challenge"||g.challenge?.startedAt;
       const curve=challengeMode?(liveChallengeSnapshot(g)?.curve||[]):(g.current?.curve||g.latestCurve||[]);
-      YeastCharts.drawMini(cv,curve,challengeMode?"#26d9c7":(g.experiments?.at(-1)?.color||"#38bdf8"))
+      YeastCharts.drawMini(cv,curve,challengeMode?"#26d9c7":((g.phase==="tutorial"?g.tutorialExperiments:g.experiments)?.at(-1)?.color||"#38bdf8"))
     });
     document.querySelectorAll(".group-delete-btn").forEach(btn=>btn.addEventListener("click",async e=>{
       e.stopPropagation();
