@@ -2147,33 +2147,77 @@ window.YEAST_FIREBASE_CONFIG = {
     const cfg=window.YEAST_FIREBASE_CONFIG;
     if(!cfg||!cfg.databaseURL) return false;
     try{
-      const [{initializeApp},{getAuth,signInAnonymously},{getDatabase,ref,set,onValue}] = await Promise.all([
+      const [{initializeApp},{getAuth,signInAnonymously},{getDatabase,ref,set,onValue,onChildAdded,onChildChanged,onChildRemoved}] = await Promise.all([
         import("https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js"),
         import("https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js"),
         import("https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js")
       ]);
       const app=initializeApp(cfg), auth=getAuth(app); await signInAnonymously(auth);
       const db=getDatabase(app);
-      cloud={db,ref,set,onValue}; cloudReady=true; return true
+      cloud={db,ref,set,onValue,onChildAdded,onChildChanged,onChildRemoved}; cloudReady=true; return true
     }catch(err){cloudErrorCode=err?.code||"";cloudError=err?.message||String(err);console.warn("Firebase disabled:",err);return false}
   }
   const cloudPromise=initCloud();
   function safeKey(s){return String(s||"group").replace(/[.#$/\[\]]/g,"_").slice(0,80)}
+  // Each student group has an independent last-write-wins queue.
+  // Avoid concurrently writing older and newer 1-second experiment snapshots.
+  const groupWrites=new Map();
+  function sendLatestGroupSnapshot(path,payload){
+    let queue=groupWrites.get(path);
+    if(!queue){queue={latest:null,sending:false};groupWrites.set(path,queue)}
+    queue.latest=payload;
+    if(queue.sending)return;
+    queue.sending=true;
+    (async()=>{
+      while(queue.latest){
+        const next=queue.latest;
+        queue.latest=null;
+        try{
+          await cloud.set(cloud.ref(cloud.db,path),next);
+        }catch(err){
+          console.warn("Group sync failed:",err);
+          cloudError=err?.message||String(err);
+          cloudErrorCode=err?.code||"database/write-failed";
+          // Drop failed snapshot until next student action; no busy retry loop.
+          queue.latest=null;
+          break;
+        }
+      }
+    })().finally(()=>{queue.sending=false;if(queue.latest)sendLatestGroupSnapshot(path,queue.latest)});
+  }
   async function publish(payload){
     safeStorage.set("yeast:last:"+payload.key,JSON.stringify(payload));
-    if(channel) channel.postMessage(payload);
+    if(channel)channel.postMessage(payload);
     await cloudPromise;
     if(cloudReady){
       const p=`classes/${safeKey(payload.classId)}/groups/${safeKey(payload.key)}`;
-      try{await cloud.set(cloud.ref(cloud.db,p),payload)}catch(e){console.warn(e)}
+      sendLatestGroupSnapshot(p,payload);
     }
   }
   function subscribeLocal(fn){listeners.add(fn);return()=>listeners.delete(fn)}
   async function subscribeCloud(fn){
-    await cloudPromise;if(!cloudReady)return()=>{};
-    const unsub=cloud.onValue(cloud.ref(cloud.db,"classes"),snap=>{
-      const v=snap.val()||{};Object.values(v).forEach(cls=>Object.values(cls.groups||{}).forEach(fn))
-    }); return unsub
+    await cloudPromise;
+    if(!cloudReady)return()=>{};
+    // Listen to only the group that changed. A 1-second update from one
+    // Chromebook must not retransmit the entire class's records.
+    const unsubs=[],keys=new Map();
+    ["B","C","D"].forEach(classId=>{
+      const groupRef=cloud.ref(cloud.db,`classes/${safeKey(classId)}/groups`);
+      const accept=snap=>{
+        const data=snap.val();
+        if(!data?.key)return;
+        keys.set(classId+"/"+snap.key,data.key);
+        fn(data);
+      };
+      unsubs.push(cloud.onChildAdded(groupRef,accept));
+      unsubs.push(cloud.onChildChanged(groupRef,accept));
+      unsubs.push(cloud.onChildRemoved(groupRef,snap=>{
+        const key=keys.get(classId+"/"+snap.key)||snap.val()?.key||snap.key;
+        keys.delete(classId+"/"+snap.key);
+        fn({type:"deleteGroup",classId,key});
+      }));
+    });
+    return ()=>unsubs.forEach(unsub=>unsub());
   }
   function localSnapshot(){
     const out=[];for(const k of safeStorage.keys()){if(k&&k.startsWith("yeast:last:")){try{const v=safeStorage.get(k);if(v)out.push(JSON.parse(v))}catch{}}}return out
