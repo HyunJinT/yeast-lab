@@ -1203,7 +1203,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
       <div>
         <span class="step-kicker">ENTRY</span>
         <h1>가상 실험실 입장</h1>
-        <p>B·C·D반 중 하나를 선택하고 모둠 정보를 입력하세요.</p>
+        <p>2-1·2-2·2-3반 중 하나를 선택하고 모둠 정보를 입력하세요.</p>
       </div>
       <a class="back-btn" href="#">← 처음으로</a>
     </div>
@@ -1212,11 +1212,11 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
         <div id="classFieldWrap" class="join-field-wrap">
           <label>반 선택</label>
           <div class="class-picker" id="classPicker">
-            <button type="button" data-class="B">B반</button>
-            <button type="button" data-class="C">C반</button>
-            <button type="button" data-class="D">D반</button>
+            <button type="button" data-class="B">2-1반</button>
+            <button type="button" data-class="C">2-2반</button>
+            <button type="button" data-class="D">2-3반</button>
           </div>
-          <div id="classInlineError" class="required-inline-error hidden">B·C·D반 중 자신의 반을 선택하세요.</div>
+          <div id="classInlineError" class="required-inline-error hidden">2-1·2-2·2-3반 중 자신의 반을 선택하세요.</div>
         </div>
 
         <div id="groupFieldWrap" class="join-field-wrap">
@@ -1634,9 +1634,9 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
 
     <div class="class-tabs" id="classTabs">
       <button data-filter="ALL" class="active">전체</button>
-      <button data-filter="B">B반</button>
-      <button data-filter="C">C반</button>
-      <button data-filter="D">D반</button>
+      <button data-filter="B">2-1반</button>
+      <button data-filter="C">2-2반</button>
+      <button data-filter="D">2-3반</button>
     </div>
 
     <section class="teacher-control-panel glass">
@@ -1648,11 +1648,17 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
         </div>
       </div>
       <div id="challengeControls" class="challenge-control-grid">
-        <button type="button" class="challenge-toggle" data-challenge-class="B"><span>B반</span><strong>🔒 잠김</strong></button>
-        <button type="button" class="challenge-toggle" data-challenge-class="C"><span>C반</span><strong>🔒 잠김</strong></button>
-        <button type="button" class="challenge-toggle" data-challenge-class="D"><span>D반</span><strong>🔒 잠김</strong></button>
+        <button type="button" class="challenge-toggle" data-challenge-class="B"><span>2-1반</span><strong>🔒 잠김</strong></button>
+        <button type="button" class="challenge-toggle" data-challenge-class="C"><span>2-2반</span><strong>🔒 잠김</strong></button>
+        <button type="button" class="challenge-toggle" data-challenge-class="D"><span>2-3반</span><strong>🔒 잠김</strong></button>
       </div>
     </section>
+
+
+
+    <div id="teacherStats" class="stats-grid"></div>
+    <div id="syncNotice" class="sync-notice"></div>
+    <div id="groupGrid" class="group-grid"></div>
 
     <section id="teacherChallengeArena" class="teacher-challenge-arena glass">
       <div class="arena-head">
@@ -1667,10 +1673,6 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
         <div class="empty-state">아직 챌린지를 시작한 모둠이 없습니다.</div>
       </div>
     </section>
-
-    <div id="teacherStats" class="stats-grid"></div>
-    <div id="syncNotice" class="sync-notice"></div>
-    <div id="groupGrid" class="group-grid"></div>
   </section>
 </main>
   <div id="groupModal" class="modal hidden" role="dialog" aria-modal="true">
@@ -1680,7 +1682,8 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
   </div>
 </div>
 
-<script>window.YEAST_FIREBASE_CONFIG = {
+<script>window.YeastClassLabel=function(id){return ({B:"2-1반",C:"2-2반",D:"2-3반"})[id]||String(id||"")+"반"};
+window.YEAST_FIREBASE_CONFIG = {
     apiKey: "AIzaSyBCwY1NAGzbOqHRjCEjogKPQ4dcF3lRTWM",
     authDomain: "yeast-lab.firebaseapp.com",
     databaseURL: "https://yeast-lab-default-rtdb.firebaseio.com",
@@ -2378,7 +2381,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
       btn.dataset.url=url;
       btn.classList.remove("disabled");
       btn.setAttribute("aria-disabled","false");
-      btn.textContent=`${state.classId}반 띵커벨 보드 ↗`;
+      btn.textContent=`${window.YeastClassLabel(state.classId)} 띵커벨 보드 ↗`;
     }else{
       delete btn.dataset.url;
       btn.classList.add("disabled");
@@ -2521,7 +2524,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
   function restore(){
     if(state.classId) document.querySelector(`[data-class="${state.classId}"]`)?.classList.add("active");
     $("groupName").value=state.group||"";
-    $("studentIdentity").textContent=state.classId?`${state.classId}반 · ${state.group}`:"미입장";
+    $("studentIdentity").textContent=state.classId?`${window.YeastClassLabel(state.classId)} · ${state.group}`:"미입장";
     if(state.classId&&state.group&&state.stage!=="join"){
       const allowed=["waiting","hypothesis","lab","reflection","report","challenge"];
       const to=state.phase==="waiting"?"waiting":allowed.includes(state.stage)?state.stage:"waiting";
@@ -2580,7 +2583,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     }
 
     $("joinError").textContent="";
-    $("studentIdentity").textContent=`${state.classId}반 · ${state.group}`;
+    $("studentIdentity").textContent=`${window.YeastClassLabel(state.classId)} · ${state.group}`;
     updateThinkerBell();
     refreshChallengeGate();
     const newKey=state.classId+"-"+state.group;
@@ -2947,7 +2950,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     const chosen=selectedExperiments();
 
     $("posterTitle").textContent=`${state.group} 연구 결과`;
-    $("posterIdentity").innerHTML=`${state.classId}반<br>${escapeHtml(state.group)}`;
+    $("posterIdentity").innerHTML=`${window.YeastClassLabel(state.classId)}<br>${escapeHtml(state.group)}`;
     $("posterHypothesis").textContent=state.hypothesis||"";
     $("posterKey").textContent=state.reflection.keyResult||"";
     $("posterUnexpected").textContent=state.reflection.unexpected||"";
@@ -3008,7 +3011,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
       });
       const a=document.createElement("a");
       a.href=canvas.toDataURL("image/png");
-      a.download=`${state.classId}반_${state.group}_효모연구결과.png`;
+      a.download=`${window.YeastClassLabel(state.classId)}_${state.group}_효모연구결과.png`;
       a.click()
     }finally{
       clone.remove()
@@ -3191,6 +3194,8 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     document.querySelectorAll("#classTabs button").forEach(x=>x.classList.remove("active"));
     b.classList.add("active");
     filter=b.dataset.filter;
+    window.YeastLesson?.setTeacherFilter(filter);
+    closeGroupDetail();
     render()
   }));
   function onControl(payload){
@@ -3265,7 +3270,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
   }
   function renderChallengeArena(all){
     const label=$("arenaClassLabel");
-    if(label) label.textContent=filter==="ALL"?"전체 반":`${filter}반`;
+    if(label) label.textContent=filter==="ALL"?"전체 반":window.YeastClassLabel(filter);
 
     const arena=$("challengeArenaGrid");
     if(!arena)return;
@@ -3290,7 +3295,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
       const reason=ch?.reason||"FINAL START 대기 중";
       return `<article class="arena-card ${cls}" data-arena-key="${esc(g.key)}">
         <div class="arena-card-head">
-          <h3>${esc(g.classId)}반 · ${esc(g.group)}</h3>
+          <h3>${esc(window.YeastClassLabel(g.classId))} · ${esc(g.group)}</h3>
           <span class="arena-status">${status}</span>
         </div>
         
@@ -3332,7 +3337,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
       const co2=challengeMode?(liveChallenge?.co2??0):(g.current?.co2??recent?.at(-1)?.curve?.at(-1)?.co2??0);
       const minute=challengeMode?(liveChallenge?.minute??0):(g.current?.minute??0);
       const reason=challengeMode?(liveChallenge?.reason||"FINAL START 대기"):(g.current?.reason||recent?.at(-1)?.reason||"");
-      return `<article class="group-card" data-key="${esc(g.key)}"><div class="group-title"><h3>${esc(g.classId)}반 · ${esc(g.group)}</h3><div class="group-card-actions"><span class="stage-tag">${stageName(g.stage,g.phase)}</span><button type="button" class="group-delete-btn" data-delete-key="${esc(g.key)}" title="이 모둠 데이터 삭제">삭제</button></div></div>
+      return `<article class="group-card" data-key="${esc(g.key)}"><div class="group-title"><h3>${esc(window.YeastClassLabel(g.classId))} · ${esc(g.group)}</h3><div class="group-card-actions"><span class="stage-tag">${stageName(g.stage,g.phase)}</span><button type="button" class="group-delete-btn" data-delete-key="${esc(g.key)}" title="이 모둠 데이터 삭제">삭제</button></div></div>
       <div class="group-meta">공통 ${g.tutorialExperiments?.length||0}회 · 탐구 ${g.experiments?.length||0}회 · ${timeAgo(g.updatedAt)}${window.YeastLesson?.teacherBadge(g)||""}</div>
       <div class="group-conditions"><span>${YeastSimName(c.substrate)}</span><span>${c.oxygen==="on"?"산소 공급":"산소 공급 없음"}</span><span>${c.sugar??"-"}%</span><span>${c.temp??"-"}℃</span><span>효모 ${c.yeast!=null?Number(c.yeast).toFixed(1):"-"}g</span></div>
       <canvas class="mini-canvas" width="360" height="100" data-curve="${esc(g.key)}"></canvas>
@@ -3348,7 +3353,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
       e.stopPropagation();
       const g=groups.get(btn.dataset.deleteKey);
       if(!g)return;
-      const ok=window.confirm(`${g.classId}반 · ${g.group} 모둠의 데이터를 삭제할까요?\n삭제한 기록은 교사용 대시보드에서 제거됩니다.`);
+      const ok=window.confirm(`${window.YeastClassLabel(g.classId)} · ${g.group} 모둠의 데이터를 삭제할까요?\n삭제한 기록은 교사용 대시보드에서 제거됩니다.`);
       if(!ok)return;
       btn.disabled=true;
       btn.textContent="삭제 중…";
@@ -3384,7 +3389,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     setTimeout(()=>{
       const delBtn=$("deleteDetailGroupBtn");
       if(delBtn) delBtn.addEventListener("click",async()=>{
-        const ok=window.confirm(`${g.classId}반 · ${g.group} 모둠의 데이터를 삭제할까요?`);
+        const ok=window.confirm(`${window.YeastClassLabel(g.classId)} · ${g.group} 모둠의 데이터를 삭제할까요?`);
         if(!ok)return;
         delBtn.disabled=true;
         delBtn.textContent="삭제 중…";
@@ -3415,6 +3420,6 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
   </div>
 </div>
 
-<script src="./lesson-mode.js?v=classroom-20261023-v2"></script>
+<script src="./lesson-mode.js?v=teacher-grid-classnames-20261023-v3"></script>
 </body>
 </html>
