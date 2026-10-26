@@ -1167,38 +1167,6 @@ body.single-file .topbar{position:sticky;top:0}
 @media(max-width:750px){#teacherContainer .group-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.teacher-detail-live{grid-template-columns:1fr}.teacher-detail-records{grid-template-columns:1fr}#teacherContainer .class-tabs button{min-width:0;flex:1}}
 @media(max-width:480px){#teacherContainer .group-grid{grid-template-columns:1fr}#teacherContainer .class-tabs button{font-size:11px;padding:9px 3px}.teacher-detail-numbers strong{font-size:16px}}
 
-/* Student experiment start confirmation dialog. Nothing runs before Yes. */
-.experiment-confirm-modal{
-  position:fixed;inset:0;z-index:1100;
-  display:grid;place-items:center;overflow:auto;
-  background:rgba(1,9,19,.78);backdrop-filter:blur(5px);
-  padding:20px;
-}
-.experiment-confirm-modal.hidden{display:none!important}
-.experiment-confirm-card{
-  width:min(520px,95vw);max-height:calc(100vh - 40px);
-  overflow:auto;border:1px solid rgba(44,210,194,.48);
-  border-radius:20px;padding:25px;
-  box-shadow:0 22px 60px rgba(0,0,0,.48);
-}
-.experiment-confirm-card h2{margin:9px 0 9px;font-size:24px}
-.experiment-confirm-card p{color:#b9d6e5;line-height:1.65}
-.experiment-confirm-list{
-  list-style:none;padding:0;margin:18px 0;
-  border:1px solid #31576b;border-radius:12px;overflow:hidden;
-  background:#0a1c2c;
-}
-.experiment-confirm-list li{
-  display:flex;justify-content:space-between;align-items:center;
-  gap:14px;padding:10px 14px;border-bottom:1px solid #234258;
-}
-.experiment-confirm-list li:last-child{border-bottom:none}
-.experiment-confirm-list span{font-size:13px;color:#96b5c6}
-.experiment-confirm-list strong{font-size:14px;color:#f2fdff;text-align:right}
-.experiment-confirm-question{color:#fff!important;text-align:center;font-weight:900;font-size:18px;margin:16px 0}
-.experiment-confirm-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.experiment-confirm-actions button{min-height:48px;font-weight:900}
-@media(max-width:460px){.experiment-confirm-card{padding:20px}.experiment-confirm-actions{gap:8px}}
 </style>
 </head>
 <body class="single-file">
@@ -2940,18 +2908,7 @@ window.YEAST_FIREBASE_CONFIG = {
       card.querySelector(".log-summary")?.setAttribute("aria-expanded","false")
     })
   });
-  // A run request is reviewed before any timer, graph update, or cloud experiment begins.
-  let pendingExperiment=null;
-  function hideExperimentConfirm(){
-    const modal=$("experimentConfirmModal");
-    modal.classList.add("hidden");
-    modal.setAttribute("aria-hidden","true");
-  }
-  function cancelExperimentConfirm(){
-    pendingExperiment=null;
-    hideExperimentConfirm();
-    (state.stage==="challenge"?$("challengeRunBtn"):$("runBtn"))?.focus();
-  }
+  // Tutorial and inquiry runs begin directly after their required-input checks.
   function validateExperimentStart(){
     if(running)return false;
     if(!isTutorial()&&!state.hypothesis){
@@ -2973,40 +2930,13 @@ window.YEAST_FIREBASE_CONFIG = {
     $("labMessage").textContent="";
     return true;
   }
-  function openExperimentConfirmation(request){
-    if(pendingExperiment||running||!request)return;
-    // Keep a snapshot of the exact settings reviewed in the popup.
-    pendingExperiment=request;
-    const conditions=request.conditions;
-    const detail=[
-      ["유기물",YeastSim.substrateName[conditions.substrate]||"없음"],
-      ["산소 공급",conditions.oxygen==="on"?"있음":"없음"],
-      ["당 농도",conditions.sugar+"%"],
-      ["온도",conditions.temp+"℃"],
-      ["효모량",Number(conditions.yeast).toFixed(1)+" g"]
-    ];
-    $("experimentConfirmTitle").textContent=request.mode==="challenge"
-      ?"최종 게임 챌린지 조건 확인":"실험 조건 확인";
-    const list=$("experimentConfirmList");
-    list.replaceChildren();
-    detail.forEach(([name,value])=>{
-      const li=document.createElement("li");
-      const label=document.createElement("span");label.textContent=name;
-      const strong=document.createElement("strong");strong.textContent=value;
-      li.append(label,strong);list.append(li);
-    });
-    const modal=$("experimentConfirmModal");
-    modal.classList.remove("hidden");
-    modal.setAttribute("aria-hidden","false");
-    $("experimentConfirmNoBtn").focus();
-  }
   function confirmExperimentStart(){
-    if(!validateExperimentStart()||pendingExperiment)return;
+    if(!validateExperimentStart())return;
     const conditions=currentConditions();
     const reason=isTutorial()
       ?("공통 실험: 산소 공급 "+(conditions.oxygen==="on"?"있음":"없음"))
       :$("reasonInput").value.trim();
-    openExperimentConfirmation({mode:"lab",conditions:{...conditions},reason,phase:state.phase});
+    runConfirmedExperiment({mode:"lab",conditions:{...conditions},reason,phase:state.phase});
   }
   function runConfirmedExperiment(request){
     if(running||!request||request.phase!==state.phase)return;
@@ -3039,29 +2969,6 @@ window.YEAST_FIREBASE_CONFIG = {
     },1000);
   }
   $("runBtn").addEventListener("click",confirmExperimentStart);
-  $("experimentConfirmNoBtn").addEventListener("click",cancelExperimentConfirm);
-  $("experimentConfirmYesBtn").addEventListener("click",()=>{
-    const request=pendingExperiment;
-    pendingExperiment=null;
-    hideExperimentConfirm();
-    if(request?.mode==="challenge")runConfirmedChallenge(request);
-    else if(request?.mode==="lab")runConfirmedExperiment(request);
-  });
-  // Escape and backdrop dismissal have the same non-destructive effect as '아니오'.
-  $("experimentConfirmModal").addEventListener("click",event=>{
-    if(event.target===$("experimentConfirmModal"))cancelExperimentConfirm();
-  });
-  document.addEventListener("keydown",event=>{
-    const modal=$("experimentConfirmModal");
-    if(modal.classList.contains("hidden"))return;
-    if(event.key==="Escape"){event.preventDefault();cancelExperimentConfirm()}
-    // Focus remains on the confirmation choices while this dialog is open.
-    if(event.key==="Tab"){
-      const no=$("experimentConfirmNoBtn"),yes=$("experimentConfirmYesBtn");
-      if(event.shiftKey&&document.activeElement===no){event.preventDefault();yes.focus()}
-      else if(!event.shiftKey&&document.activeElement===yes){event.preventDefault();no.focus()}
-    }
-  });
   $("goReflectionBtn").addEventListener("click",()=>{
     if(state.experiments.length<1){
       showWarning("생각 변화 정리를 하려면 최소 1회 실험을 수행해야 합니다.");
@@ -3298,7 +3205,7 @@ window.YEAST_FIREBASE_CONFIG = {
       updateChallengeAttemptUI();
       return;
     }
-    if(running||pendingExperiment)return;
+    if(running)return;
     const reason=$("challengeReason").value.trim();
     if(!reason){
       $("challengeReasonWrap")?.classList.add("required-error");
@@ -3316,7 +3223,7 @@ window.YEAST_FIREBASE_CONFIG = {
       temp:+$("challengeTemp").value,
       yeast:+$("challengeYeast").value
     };
-    openExperimentConfirmation({mode:"challenge",conditions,reason,phase:state.phase});
+    runConfirmedChallenge({mode:"challenge",conditions,reason,phase:state.phase});
   });
   function runConfirmedChallenge(request){
     refreshChallengeGate();
@@ -3687,21 +3594,6 @@ window.YEAST_FIREBASE_CONFIG = {
   function esc(s){return String(s||"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]))}
 })();</script>
 
-
-<div id="experimentConfirmModal" class="experiment-confirm-modal hidden" role="dialog" aria-modal="true"
-  aria-hidden="true" aria-labelledby="experimentConfirmTitle" aria-describedby="experimentConfirmQuestion">
-  <div class="experiment-confirm-card glass">
-    <span class="step-kicker">EXPERIMENT CHECK</span>
-    <h2 id="experimentConfirmTitle">실험 조건 확인</h2>
-    <p>설정한 조건을 확인해 주세요.</p>
-    <ul id="experimentConfirmList" class="experiment-confirm-list"></ul>
-    <p id="experimentConfirmQuestion" class="experiment-confirm-question">실험을 진행할까요?</p>
-    <div class="experiment-confirm-actions">
-      <button id="experimentConfirmNoBtn" class="secondary-btn" type="button">아니오</button>
-      <button id="experimentConfirmYesBtn" class="primary-btn" type="button">예</button>
-    </div>
-  </div>
-</div>
 
 <div id="warningModal" class="warning-modal hidden" role="dialog" aria-modal="true" aria-labelledby="warningTitle">
   <div class="warning-dialog glass">
