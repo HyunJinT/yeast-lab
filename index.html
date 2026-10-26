@@ -701,6 +701,8 @@ body.single-file .topbar{position:sticky;top:0}
   font-size:10px;line-height:1.45
 }
 .five-result-notice>b{color:#70e4d9}
+.oxygen-fixed-guide{display:block;margin-top:3px;color:#71e5d9;font-size:10px;font-weight:800}
+#oxygenSelect:disabled{opacity:1;color:#80ece4;border-color:#24695f;background:#0b302f;cursor:not-allowed}
 
 .challenge-reason-wrap{min-width:0}
 .challenge-reason-wrap>label{margin-bottom:6px}
@@ -1309,15 +1311,15 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
     <div class="hypothesis-step-grid">
       <section class="glass panel hypothesis-step-card">
         <span class="step-kicker">OUR HYPOTHESIS</span>
-        <h2>어떤 조건이 효모의 CO₂ 발생에 영향을 줄까요?</h2>
-        <p class="hypothesis-guide">오른쪽에 제시된 실험 가능 조건을 확인한 뒤, 비교할 변인과 예상 결과, 이유가 드러나게 작성하세요.</p>
+        <h2>산소가 없는 조건에서 무엇이 CO₂ 발생량을 바꿀까요?</h2>
+        <p class="hypothesis-guide">🔒 <b>산소 공급 없음(고정)</b> · 유기물 종류, 당 농도, 온도, 효모량 중 비교할 변인을 정하고 예상 결과와 이유를 작성하세요.</p>
 
         <div id="hypothesisBox" class="hypothesis-box standalone">
           <div class="hypothesis-head">
             <label for="hypothesisInput">우리 모둠의 초기 가설</label>
             <span id="hypothesisStatus">첫 실험 전까지 수정 가능</span>
           </div>
-          <textarea id="hypothesisInput" maxlength="260" placeholder="예: 당 농도를 5%에서 10%로 높이면 30분 동안의 CO₂ 발생량이 증가할 것이다. 왜냐하면 효모가 이용할 수 있는 기질이 더 충분해지기 때문이다."></textarea>
+          <textarea id="hypothesisInput" maxlength="260" placeholder="예: 산소가 없는 조건에서 당 농도를 5%에서 10%로 높이면 30분 동안의 CO₂ 발생량이 증가할 것이다. 왜냐하면 효모가 이용할 수 있는 기질이 더 충분해지기 때문이다."></textarea>
           <div class="hypothesis-note">※ 위 문장은 예시입니다. 우리 모둠의 가설을 직접 입력하세요.</div>
           <div id="hypothesisInlineError" class="required-inline-error hidden">초기 가설을 입력해야 다음 단계로 이동할 수 있습니다.</div>
         </div>
@@ -1330,7 +1332,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
         <h2>가상 실험에서 사용할 수 있는 조건</h2>
         <div class="available-condition-grid">
           <div><b>유기물</b><span>포도당 · 설탕 · 과당 · 전분 · 없음</span></div>
-          <div><b>산소</b><span>공급 / 공급 없음</span></div>
+          <div><b>산소</b><span>공급 없음 🔒 고정</span></div>
           <div><b>당 농도</b><span>0~25% (w/v)</span></div>
           <div><b>온도</b><span>10~50℃</span></div>
           <div><b>건조효모</b><span>0~2.0 g</span></div>
@@ -1339,12 +1341,12 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
 
         <div class="hypothesis-question-box">
           <span>탐구 질문</span>
-          <strong>어떤 조건이 효모의 CO₂ 발생과 에너지 획득에 영향을 줄까?</strong>
+          <strong>산소가 없는 상태에서 어떤 조건이 CO₂ 발생량에 영향을 줄까?</strong>
         </div>
 
         <div class="hypothesis-frame">
           <b>가설 문장 틀</b>
-          <p>만약 <u>어떤 조건</u>을 바꾸면, 30분 동안의 <u>CO₂ 발생량</u>은 <u>증가 / 감소 / 가장 많음 / 가장 적음</u>할 것이다. 왜냐하면 ________이기 때문이다.</p>
+          <p><b>산소 공급이 없는 상태에서</b> 만약 <u>어떤 조건</u>을 바꾸면, 30분 동안의 <u>CO₂ 발생량</u>은 <u>증가 / 감소 / 가장 많음 / 가장 적음</u>할 것이다. 왜냐하면 ________이기 때문이다.</p>
         </div>
 
         <div class="hypothesis-examples">
@@ -1360,7 +1362,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
           <div><b>② 예상</b><span>어떤 결과가 나타날 것인가?</span></div>
           <div><b>③ 이유</b><span>왜 그렇게 예상하는가?</span></div>
         </div>
-        <p class="model-note">위에 제시된 조건 범위 안에서 가설을 세우세요. 첫 실험이 시작되면 초기 가설은 잠깁니다.</p>
+        <p class="model-note">산소는 공급하지 않는 조건으로 고정합니다. 나머지 조건 범위 안에서 가설을 세우세요. 자유탐구의 첫 실험이 시작되면 초기 가설은 잠깁니다.</p>
       </section>
     </div>
   </section>
@@ -1451,7 +1453,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
                 <option value="none">유기물 없음</option>
               </select>
             </label>
-            <label>산소 공급
+            <label>산소 공급 <span id="oxygenFixedGuide" class="oxygen-fixed-guide hidden">🔒 공급 없음 고정</span>
               <select id="oxygenSelect">
                 <option value="off">공급 없음</option>
                 <option value="on">공급</option>
@@ -1477,7 +1479,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
           <div class="reason-row">
             <label for="reasonInput">이번 조건을 선택한 이유 <span>직접 작성</span></label>
             <div id="reasonInputWrap" class="reason-input-wrap">
-              <textarea id="reasonInput" maxlength="220" placeholder="예: 산소 공급이 없을 때도 CO₂가 발생하는지 확인하려고 이 조건을 선택했다."></textarea>
+              <textarea id="reasonInput" maxlength="220" placeholder="예: 산소가 없는 상태에서 당 농도에 따라 CO₂ 발생량이 달라지는지 확인하려고 이 조건을 선택했다."></textarea>
               <div id="reasonInlineError" class="required-inline-error hidden">이번 조건을 선택한 이유를 입력해야 실험을 시작할 수 있습니다.</div>
             </div>
             <button id="runBtn" class="primary-btn" type="button">실험 시작</button>
@@ -1579,7 +1581,7 @@ window.HYUNJIN_AVATAR="data:image/webp;base64,UklGRqQnAABXRUJQVlA4WAoAAAAQAAAAsw
       </div>
       <div class="poster-grid">
         <div class="poster-col">
-          <article><span>탐구 질문</span><p>효모는 서로 다른 유기물과 산소 조건에서 어떻게 에너지를 얻을까?</p></article>
+          <article><span>탐구 질문</span><p>산소가 없는 조건에서 무엇이 효모의 CO₂ 발생량에 영향을 줄까?</p></article>
           <article><span>초기 가설</span><p id="posterHypothesis"></p></article>
           <article><span>가장 중요한 결과</span><p id="posterKey"></p></article>
           <article><span>예상 밖 결과</span><p id="posterUnexpected"></p></article>
@@ -2446,10 +2448,15 @@ window.YEAST_FIREBASE_CONFIG = {
     if(lab){
       lab.querySelector(".head-left h1").textContent=demo?"실험 1 · 산소 유무에 따른 CO₂ 발생":"효모 에너지 획득 가상실험";
       lab.querySelector(".head-left .step-kicker").textContent=demo?"TUTORIAL · OXYGEN":"STEP 1 · FREE INQUIRY";
-      lab.querySelector(".head-left p").textContent=demo?"산소 공급 여부만 바꾸어 CO₂ 발생을 관찰해 보세요.":"한 번에 여러 조건을 바꿀 수 있지만, 결과 해석을 위해 바뀐 변인을 확인하세요.";
+      lab.querySelector(".head-left p").textContent=demo?"산소 공급 여부만 바꾸어 CO₂ 발생을 관찰해 보세요.":"산소 공급은 없는 상태로 고정합니다. 유기물 종류·당 농도·온도·효모량을 바꾸어 CO₂ 발생량을 비교해 보세요.";
     }
     if(demo){for(const [k,v] of Object.entries({substrate:"glucose",sugar:"5",temp:"30",yeast:"1"})){controls[k].value=v;controls[k].disabled=true}}
     else if(!running){for(const k of ["substrate","sugar","temp","yeast"])controls[k].disabled=false}
+    if(state.phase==="inquiry"){
+      controls.oxygen.value="off";
+      controls.oxygen.disabled=true;
+    }else if(!running){controls.oxygen.disabled=false}
+    $("oxygenFixedGuide")?.classList.toggle("hidden",state.phase!=="inquiry");
     const sceneNote=$("labView")?.querySelector(".realism-note");
     if(sceneNote){
       if(!window.YeastDefaultSceneNote)window.YeastDefaultSceneNote=sceneNote.textContent;
@@ -2727,14 +2734,19 @@ window.YEAST_FIREBASE_CONFIG = {
     zone?.classList.toggle("is-running",locked);
     overlay?.classList.toggle("hidden",!locked);
     if(!locked&&isTutorial())for(const k of ["substrate","sugar","temp","yeast"])controls[k].disabled=true;
+    if(!locked&&state.phase==="inquiry"){
+      controls.oxygen.value="off";
+      controls.oxygen.disabled=true;
+    }
     refreshClassroomGates();
 
     if($("runBtn")){
       $("runBtn").textContent=locked?"실험 진행 중…":"실험 시작";
     }
   }
-  function currentConditions(){return {substrate:controls.substrate.value,oxygen:controls.oxygen.value,sugar:+controls.sugar.value,temp:+controls.temp.value,yeast:+controls.yeast.value,model:isTutorial()?"pathway-v2":"physiological-v1"}}
+  function currentConditions(){return {substrate:controls.substrate.value,oxygen:state.phase==="inquiry"?"off":controls.oxygen.value,sugar:+controls.sugar.value,temp:+controls.temp.value,yeast:+controls.yeast.value,model:isTutorial()?"pathway-v2":"physiological-v1"}}
   function updateControlLabels(){
+    if(state.phase==="inquiry")controls.oxygen.value="off";
     $("sugarOut").textContent=controls.sugar.value+"%";$("tempOut").textContent=controls.temp.value+"℃";$("yeastOut").textContent=(+controls.yeast.value).toFixed(1)+" g";
     const prev=activeExperiments().at(-1)?.conditions, cur=currentConditions(), changed=YeastSim.diff(prev,cur);
     $("changedConditions").textContent=changed.join(" · ");$("multiVarWarning").classList.toggle("hidden",changed.filter(x=>x!=="첫 실험"&&x!=="변경 없음").length<2);
@@ -2940,7 +2952,7 @@ window.YEAST_FIREBASE_CONFIG = {
     updateHypothesisUI();
     setExperimentControlsLocked(true);
     const records=activeExperiments();
-    const c=request.conditions,reason=request.reason;
+    const c=request.phase==="inquiry"?{...request.conditions,oxygen:"off"}:request.conditions,reason=request.reason;
     const prev=records.at(-1)?.conditions,changed=YeastSim.diff(prev,c),curve=YeastSim.makeCurve(c);
     if($("bubbleLayer"))$("bubbleLayer").replaceChildren();
     const exp={id:`e${Date.now()}`,conditions:c,changed,reason,curve,color:colors[records.length%colors.length],phase:state.phase,modelVersion:c.model,createdAt:Date.now()};
