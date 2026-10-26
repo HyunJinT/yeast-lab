@@ -1,7 +1,7 @@
 /* Teacher-paced classroom workflow. Student tutorial and inquiry records stay separate. */
 (() => {
   "use strict";
-  const classes=["B","C","D"],$=id=>document.getElementById(id);
+  const classes=["C","D","B"],$=id=>document.getElementById(id);
   const snapshot=cls=>window.YeastCloud?.controlSnapshot(cls)||{};
   const styles=document.createElement("style");
   styles.textContent=`
